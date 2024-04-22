@@ -9,10 +9,12 @@ The basic structure is like the following: there is a file, func.c, which define
 Your good old Artificial Neural Network. Does what it should do. It is also the parent class of all the other types.
 ## Methods:
 ### neural_net::init
-  Initialiser for the neural net. Takes the following arguments:
-  `int layers`    Self explanitory, only applies to hidden nodes.
-  `int rows`      Again, this one is just for the hidden nodes.
-  `int inputs`
+Initialiser for the neural net. Takes the following arguments:
+`int inputs`    The number of inputs to the net (these are not neurons, just values).
+`int outputs`   The number of output neurons.
+`int layers`    Self explanitory, only applies to hidden nodes.
+`int rows`      Again, this one is just for the hidden nodes.
+`bool printnet_after_death` 
 
 # CNN
 
