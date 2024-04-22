@@ -7,12 +7,12 @@ The basic structure is like the following: there is a file, func.c, which define
 
 # ANN
 Your good old Artificial Neural Network. Does what it should do. It is also the parent class of all the other types.
-Methods:
-  neural_net::init
+## Methods:
+### neural_net::init
   Initialiser for the neural net. Takes the following arguments:
-  int layers    Self explanitory, only applies to hidden nodes.
-  int rows      Again, this one is just for the hidden nodes.
-  int 
+  `int layers`    Self explanitory, only applies to hidden nodes.
+  `int rows`      Again, this one is just for the hidden nodes.
+  `int inputs`
 
 # CNN
 
