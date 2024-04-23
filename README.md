@@ -7,7 +7,7 @@ As for the type of dynamic lists I use, they are vectors from the standard libra
 The basic structure is like the following: there is a file, func.c, which defines neuron activation functions, loss functions and pooling functions (for CNN). This file uses the math.h standard library. Then another file, neuron.cpp, defines the neuron sructure and a few basic function that come with it. It uses the vector library. At last there is the main file, neural_net.cpp, which encloses the classes that define the types of neural network. I used inheritance, where ANN is the parent and CNN, RNN and Transformer are subclasses. This file uses the iostream and fstream libraries. 
 
 # ANN
-Your good old Artificial Neural Network. It is also the parent class of all the other types.
+Your good old Artificial Neural Network. It is also the parent class of all the other types. Its class is called: neural_net.
 ## Public variables
 * `Net net` and `Collumn outn` Vectors used to store the neurons.
 * `matrix midl` and `list outl` Vectors used to store neuron activations.
