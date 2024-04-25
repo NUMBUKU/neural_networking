@@ -4,7 +4,7 @@ With this repository I am trying to create a universal library for neural networ
 As for the type of dynamic lists I use, they are vectors from the standard library. I do have a linked list library, but it is bad and not practical for this use case. The data type is double, since it is more precise. To compress this type, I used the following code:
 `typedef vector<double> list; // defines a list`
 
-The basic structure is like the following: there is a file, func.c, which defines neuron activation functions, loss functions and pooling functions (for CNN). This file uses the math.h standard library. Then another file, neuron.cpp, defines the neuron sructure and a few basic function that come with it. It uses the vector library. At last there is the main file, neural_net.cpp, which encloses the classes that define the types of neural network. I used inheritance, where ANN is the parent and CNN, RNN and Transformer are subclasses. This file uses the iostream and fstream libraries. 
+The basic structure is like the following: there is a file, func.c, which defines neuron activation functions and loss functions. This file uses the math.h standard library. Then another file, neuron.cpp, defines the neuron sructure and a few basic function that come with it. It uses the vector library. At last there is the main file, neural_net.cpp, which encloses the classes that define the types of neural network. I used inheritance, where ANN is the parent and CNN, RNN and Transformer are subclasses. This file uses the iostream and fstream libraries. 
 
 # ANN
 Your good old Artificial Neural Network. It is also the parent class of all the other types.
@@ -24,8 +24,8 @@ Initialiser for the neural net. Takes the following arguments:
 * `int outputs` The number of output neurons.
 * `int layers` Self explanitory, only applies to hidden nodes.
 * `int rows` Again, this one is just for the hidden nodes.
-* `double coefficient` Set to `0.01` by default. stored in `neural_net::coef`
-* `bool learn_coefficients` Set to `false` by default. When set to true the net learns extra coefficients in the activation functions. If true, the value of `neural_net::coef` is used as an initialiser value.
+* `double coefficient` Set to `0.01` by default. Stored in `neural_net::coef`
+* `bool learn_coefficients` Set to `false` by default. When set to true the net learns extra coefficients in the activation functions. If true, the value of `neural_net::coef` is used as an initialiser value. Stored in `neural_net::printnet`
 
 # CNN
 
