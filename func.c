@@ -1,6 +1,7 @@
 # include <math.h>
 
 // some activation functions
+// sigmoids
 
 double hyptan (double in, double a, int der){ // scaling function from -1 to 1
     double c;
@@ -28,18 +29,28 @@ double sigmoid (double in, double a, int der){ // scaling function from 0 to 1
     return der == 1 ? (exp(in))/(c*c) : 1/(1 + exp(-1*in));
 }
 
+// linear units
+
+double identity (double in, double a, int der){
+    return der == 1 ? 1 : in;
+}
+
 double ReLU (double in, double a, int der){
     return der == 1 ? (in <= 0 ? 0 : 1) : (in <= 0 ? 0 : in);
 }
 
 double LeakyReLU (double in, double a, int der){
-    if (der == 1){ // ∂f/∂in
+    if (der == 1) // ∂f/∂in
         return in <= 0 ? a : 1;
-    }
-    if (der == 2){ // ∂f/∂a
+    
+    if (der == 2) // ∂f/∂a
         return in <= 0 ? in : 0;
-    }
+    
     return in <= 0 ? in * a : in;
+}
+
+double binstep(double in, double a, int der){
+    return der == 1 ? 0 : ReLU(in, a, 1);
 }
 
 double SiLU (double in, double a, int der){
@@ -47,12 +58,12 @@ double SiLU (double in, double a, int der){
 }
 
 double ExLU (double in, double a, int der){
-    if (der == 1){ // ∂f/∂in
+    if (der == 1) // ∂f/∂in
         return in <= 0 ? a * exp(in) : 1;
-    }
-    if (der == 2){ // ∂f/∂a
+    
+    if (der == 2) // ∂f/∂a
         return in <= 0 ? exp(in) - 1 : 0;
-    }
+    
     return in <= 0 ? a * (exp(in) - 1) : in;
 }
 
@@ -61,5 +72,12 @@ double SoftPlus (double in, double a, int der){
 }
 
 enum act_func{ // classification for the activation functions
-    TANH,NTANH,ARCTAN,NARCTAN,SIGMOID,RELU,LRELU,SILU,ELU,SP
+    TANH,NTANH,ARCTAN,NARCTAN,SIGMOID,RELU,LRELU,SILU,ELU,SP,BINSTEP,ID
 };
+
+// some loss functions
+
+double mean_squared (double y, double ypred, int der, double C = 1){
+    double dif = y - ypred;
+    return der == 1 ? 2 * C * (y - ypred) : C * dif * dif;
+}

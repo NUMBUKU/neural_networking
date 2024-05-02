@@ -30,7 +30,7 @@ double calc_act (list act, neuron n, double a){ // calculates what the output of
     return n.func(calc_z(act, n), a, 0);
 }
 
-double loss (double wanted, double given){ // calculates how bad the machine performes   
+double singleloss (double wanted, double given){ // calculates how bad the machine performes   
     double c = given - wanted;  
     return c*c;
 }
@@ -91,8 +91,11 @@ double (*func(act_func f))(double, double, int){
             return &ExLU;
         case 9:
             return &SoftPlus;
+        case 10:
+            return &binstep;
+        case 11:
+            return &identity;
         default: 
-            return &ReLU;
+            return &identity;
     }
 }
-//    TANH,NTANH,ARCTAN,NARCTAN,SIGMOID,RELU,LRELU,SILU,ELU,SP
