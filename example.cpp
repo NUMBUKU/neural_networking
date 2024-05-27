@@ -4,7 +4,7 @@
 
 using std::cout, std::ostream;
 
-const double const_learning_rate = 1,
+const type const_learning_rate = 1,
     initial_learning_rate = .2,
     decay = 1;
 
@@ -19,7 +19,7 @@ vector<list> inputlists = {{0}, {1}, {-1}, {.5}, {-.5}, {2}},
 wantedlists {{0}, {-1}, {1}, {-.5}, {.5}, {-2}};
 
 
-double lr (int epoch){
+type lr (int epoch){
     return initial_learning_rate/(1+decay*epoch);
     // return const_learning_rate;
 }
@@ -28,7 +28,7 @@ int main (){
     neural_network net;
     net.add_dense_layer(1, IDENTITY, 1, 0.01);
 
-    double cost = 0;
+    type cost = 0;
     for (int epoch = 0; epoch < 50; epoch++) for (int iteration = 0; iteration < 6; iteration++){
         net.evaluate(inputlists[iteration]);
         net.fit(wantedlists[iteration], lr(epoch), 1);

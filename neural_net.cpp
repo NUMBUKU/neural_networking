@@ -11,13 +11,13 @@ using std::runtime_error,
 class neural_network {
     protected:
         list dcdin;
-        void change_previous (int layer, double dcda, double lr, int batch_size){ // recursive method for changing the previous activation
+        void change_previous (int layer, type dcda, type lr, int batch_size){ // recursive method for changing the previous activation
             list impact_list;
             for (int i = 0; i < net[layer].size(); i++){
                 int wgtsize = net[layer][i].wgt.size();
 
-                if (layer == 0) impact_list = calc_impact(in, net[layer][i], actlist[lastlayer][i]);
-                else impact_list = calc_impact(actlist[layer-1], net[layer][i], actlist[lastlayer][i]);
+                if (layer == 0) impact_list = calc_impact(in, &net[layer][i], actlist[lastlayer][i], learn_coeffficents);
+                else impact_list = calc_impact(actlist[layer-1], &net[layer][i], actlist[lastlayer][i], learn_coeffficents);
 
                 net[layer][i].bias -= lr * dcda * impact_list[0] / batch_size;
                 for (int j = 0; j < wgtsize; j++){
@@ -35,25 +35,33 @@ class neural_network {
         list in, // variable for storing the given input of the net
         outlist; // variable for storing the output list of the net (the same as actlist[lastlayer])
 
-        double certainty; // variable for storing the certainty of the net
+        type certainty; // variable for storing the certainty of the net
 
         int out_index = 0, // variable for storing the index of the highest value in neural_network::outlist
-        lastlayer = -1; // variable for storing the index of the last layer
+        lastlayer = -1, // variable for storing the index of the last layer
+        incount;
 
-        unsigned long iteration = 0; // variable for storing the number of feed forward cycles the net has gone through
+        unsigned long long iteration = 0; // variable for storing the number of feed forward cycles the net has gone through
 
         bool learn_coeffficents, // boolean for storing if the user wants the net to learn the coefficients of the activation functions by itself
-        initialised = false;
+        initialised = false,
+        inputinitialised = false;
 
-        void add_dense_layer (int neuron_count, act_func activation_function, int input_count = 0, double coefficient = 0.01){            
+        void add_input (int input_count){
+            if (input_count <= 0) throw runtime_error("input_count should be greater than zero.");
+            if (inputinitialised) throw runtime_error("Input was already defined.");
+
+            incount = input_count;
+            
+            inputinitialised = true;
+        }
+
+        void add_dense_layer (int neuron_count, act_func activation_function, type coefficient = 0.01){            
             Collumn layer (neuron_count);
+            if (inputinitialised) throw runtime_error("neural_network::add_input should have been run before adding dense layers.");
             for (int i = 0; i < neuron_count; i++){
-                if (net.size() != 0) layer[i].wgt = list (net[lastlayer].size(), 1);
-                else {
-                    if (input_count <= 0) throw runtime_error("For the first layer, input_count should be defined as a number greater than 0.");
-                    layer[i].wgt = list (input_count, 1);
-                    initialised = true;
-                }
+                if (net.size() == 0) list (net[lastlayer].size(), 1);
+                else layer[i].wgt = list (incount, 1);
 
                 layer[i].coef = coefficient;
 
@@ -65,6 +73,8 @@ class neural_network {
             actlist.push_back(list (neuron_count, 0)); actlist.shrink_to_fit();
 
             lastlayer++;
+
+            initialised = true;
         }
 
         void export_net (bool write_to_terminal = true, bool write_to_file = false){ // method for printing the net
@@ -99,23 +109,23 @@ class neural_network {
 
         int evaluate (list input){ // calculates the output of the net given an input
             if (!initialised) throw runtime_error("Please run neural_network::add_dense_layer to initialise the net.");
-            if (input.size() != net[0][0].wgt.size()) throw runtime_error("Input list should be the same size as the amount of input neurons.");
+            if (input.size() != incount) throw runtime_error("Input list should be the same size as the amount of input neurons.");
             
             in = input;
 
             for (int i = 0; i < net.size() - 1; i++){
                 for (int j = 0; j < net[i].size(); j++){
-                    if (i == 0) actlist[i][j] = calc_act(in, net[i][j]);
-                    else actlist[i][j] = calc_act(actlist[i-1], net[i][j]);
+                    if (i == 0) actlist[i][j] = calc_act(in, &net[i][j]);
+                    else actlist[i][j] = calc_act(actlist[i-1], &net[i][j]);
                 }
             }
 
             for (int i = 0; i < net[lastlayer].size(); i++){
-                if (net.size() == 1) actlist[lastlayer][i] = calc_act(in, net[lastlayer][i]);
-                else actlist[lastlayer][i] = calc_act(actlist[net.size()-1], net[lastlayer][i]);
+                if (net.size() == 1) actlist[lastlayer][i] = calc_act(in, &net[lastlayer][i]);
+                else actlist[lastlayer][i] = calc_act(actlist[net.size()-1], &net[lastlayer][i]);
             }
             
-            double temp = actlist[lastlayer][0],
+            type temp = actlist[lastlayer][0],
             tot = abs(actlist[lastlayer][0]);
             out_index = 0;
             for (int i = 1; i < actlist[lastlayer].size(); i++){
@@ -134,19 +144,19 @@ class neural_network {
             return out_index;
         }
     
-        double calc_loss (list wanted, loss_func function = MEAN_SQUARED){ // calculates the cost, a measure of how bad the net is performing (only works if neural_network::calc_out has already been run)
+        type loss (list wanted, loss_func function = MEAN_SQUARED){ // calculates the cost, a measure of how bad the net is performing (only works if neural_network::calc_out has already been run)
             if (!initialised) throw runtime_error("Please run neural_network::add_dense_layer to initialise the net.");
             int size = actlist[lastlayer].size();
-            if (wanted.size() != size) throw runtime_error("Wanted list shoulb be the same size as the number of outputs");
+            if (wanted.size() != size) throw runtime_error("Wanted list should be the same size as the number of outputs");
             if (iteration == 0) throw runtime_error("This method only works if neural_network::evaluate has already been run.");
 
-            double cost = 0;
+            type cost = 0;
             for (int i = 0; i < size; i++) cost += lfunc(function)(wanted[i], actlist[lastlayer][i], 0);
 
             return cost;
         }
 
-        void fit (list wanted, double learning_rate, int batch_size = 1, loss_func function = MEAN_SQUARED){ // improves the net by trying to lower the cost (only works if neural_network::calc_out has already been run)
+        void fit (list wanted, type learning_rate, int batch_size = 1, loss_func function = MEAN_SQUARED){ // improves the net by trying to lower the cost (only works if neural_network::calc_out has already been run)
             if (!initialised) throw runtime_error("Please run neural_network::add_dense_layer to initialise the net.");
             list impact_list;
             int size = net.size(),
@@ -156,15 +166,16 @@ class neural_network {
             if (iteration == 0) throw runtime_error("This method only works if neural_network::evaluate has already been run.");
             
             for (int i = 0; i < outsize; i++){
-                int wgtsize = net[lastlayer][i].wgt.size();
+                neuron neur = net[lastlayer][i];
+                int wgtsize = neur.wgt.size();
 
-                if (size == 0) impact_list = calc_impact(in, net[lastlayer][i], wanted[i], actlist[lastlayer][i], function);
-                else impact_list = calc_impact(actlist[size-1], net[lastlayer][i], wanted[i], actlist[lastlayer][i], function);
+                if (size == 0) impact_list = calc_impact(in, &neur, wanted[i], actlist[lastlayer][i], function, learn_coeffficents);
+                else impact_list = calc_impact(actlist[size-1], &neur, wanted[i], actlist[lastlayer][i], function, learn_coeffficents);
 
-                net[lastlayer][i].bias -= (learning_rate * impact_list[0] / batch_size);
+                neur.bias -= (learning_rate * impact_list[0] / batch_size);
 
                 for (int j = 0; j < wgtsize; j++){
-                    net[lastlayer][i].wgt[j] -= (learning_rate * impact_list[j+1] / batch_size);
+                    neur.wgt[j] -= (learning_rate * impact_list[j+1] / batch_size);
                     if (size != 1) change_previous(size-1, impact_list[j+wgtsize+1], learning_rate, batch_size);
                 }
             }
@@ -174,13 +185,26 @@ class neural_network {
 
 class CNN : public neural_network {
     private:
+        bool fullyconnected = false; // boolean for storing id the user already added fullyconnected layers
+
+        // used for readability
+        const int CONVDETAILS = 7, // amount of details in a convolutional layer
+            POOLDETAILS = 5, // amount of details in a pooling layer
+            TYPESPECIFIER = 0;
+        
+        enum convdetail{dummy,FEATURES,XPADDING,YPADDING,XFEATURE,YFEATURE,STRIDEFEATURE,CONVOLUTIONINDEX};
+        enum pooldetails{dummy,MAXPOOL,XPOOLWINDOW,YPOOLWINDOW,STRIDEPOOLWINDOW};
+
+        enum layertype{CONVOLUTIONAL,POOLING};
+
+
         void printconv(bool term, bool file){
 
         }
 
-        double pool (matrix in, bool m){
+        type pool (matrix in, bool m){
             int rows = in[0].size(), col = in.size();
-            double returnval = 0;
+            type returnval = 0;
 
             for (int i = 0; i < col; i++) for (int j = 0; j < rows; j++){
                 if (in[i][j] > returnval && m) returnval = in[i][j];
@@ -190,7 +214,7 @@ class CNN : public neural_network {
             return m ? returnval : returnval / (rows * col);
         }
 
-        matrix backpool (matrix in, double out, bool m){
+        matrix backpool (matrix in, type out, bool m){
             int rows = in[0].size(), col = in.size();
             matrix returnval;
             if (m) returnval = matrix(col, list (rows, 0));
@@ -203,8 +227,8 @@ class CNN : public neural_network {
             return returnval;
         }
 
-        double conv(matrix I, matrix F){
-            double returnval = 0;
+        type conv(matrix I, matrix F){
+            type returnval = 0;
             int rows = I[0].size();
             
             for (int i = 0; i < I.size(); i++) for (int j = 0; j < rows; j++) returnval += I[i][j] * F[i][j];
@@ -215,227 +239,157 @@ class CNN : public neural_network {
     public:
         vector<vector<matrix>> K, // fourth order tensor for storing all the features
         channels, // fourth order tensor for storing all the convolutional channels
-        backprop; // fourth order tensor for storing all the  partial derivatives
+        backprop; // fourth order tensor for storing all the partial derivatives
+        matrix biasses, // matrix for storing biasses of convolution layers
 
-        matrix biasses; // matrix for storing biasses of convolution layers
+        conlayers;
 
-        vector<int> f;
+        int xin, yin, inANN,
+        outchan,
+        lastconlayer = -1;
 
-        int xf, yf, sf,
-        xpo, ypo, spo,
-        conlay, xpa, ypa,
-        xin, yin, xinANN, yinANN, inANN,
-        outchan;
+        void input (int xinput, int yinput, int channelcount = 1){
+            if (xinput <= 0 || yinput <= 0 || channelcount <=0) throw runtime_error("All parameters of CNN::input should be greater than zero.");
+            
+            xin = xinput; yin = yinput; outchan = channelcount;
 
-        vector<bool> max;
+            // adding the input matrix to CNN::channels
+            channels.push_back(vector<matrix> (channelcount, matrix (yin, list (xin))));
+        }
 
-        void init (int xinputs, int yinputs, int conlayers, int features, bool paddingvalid = true, int xfeature = 3, int yfeature = 3, int xpoolwindow = 2, int ypoolwindow = 2, int stridepoolwindow = 2, int stridefeature = 1){ // initialiser
-            xin = xinputs, yin = yinputs;
-            xinANN = xinputs; yinANN = yinputs;
-            xf = xfeature; yf = yfeature; sf = stridefeature;
-
-            xpo = xpoolwindow; ypo = ypoolwindow; spo = stridepoolwindow;
-
+        void add_convolutional_layer (int features, bool paddingvalid, int xfeature = 3, int yfeature = 3, int stridefeature = 1){
+            if (fullyconnected) throw runtime_error("No convolutional layers should be added after adding a fully connected layer.");
+            if (conlayers.size() == 0){
+                
+            }
+            
+            int xpa, ypa;
             if (paddingvalid){xpa = (xfeature-1)/2; ypa = (yfeature-1)/2;}
             else {xpa = 0; ypa = 0;}
 
-            conlay = conlayers;
+            list layer (CONVDETAILS);
+            layer[TYPESPECIFIER] = CONVOLUTIONAL;
+            layer[FEATURES] = features;
+            layer[XPADDING] = xpa;
+            layer[YPADDING] = ypa;
+            layer[XFEATURE] = xfeature;
+            layer[YFEATURE] = yfeature;
+            layer[STRIDEFEATURE] = stridefeature;
+            layer[CONVOLUTIONINDEX] = K.size();
 
-            f = vector<int>(conlayers, features);
+            conlayers.push_back(layer); conlayers.shrink_to_fit();
+            lastconlayer++;
+            K.push_back(vector<matrix> (features, matrix (yfeature, list(xfeature, 1)))); K.shrink_to_fit();
+            biasses.push_back(list (features, 0)); biasses.shrink_to_fit();
             
-            // initialising feedforward layers, biasses and pooltypes
-            bool m = false;
-            for (int i = 0; i < conlay; i++){
-                xinANN = floor(1 + ((xinANN+2*xpa - xfeature)/stridefeature));
-                xinANN = floor(1 + ((xinANN - xpoolwindow)/stridepoolwindow));
-                yinANN = floor(1 + ((yinANN+2*ypa - yfeature)/stridefeature));
-                yinANN = floor(1 + ((yinANN - ypoolwindow)/stridepoolwindow));
+            // calculating the new size of the vector of matrices that will be pushed to CNN::channels
+            outchan *= features;
+            int newY = floor(1 + ((channels[conlayers.size()-2][0].size()+2*ypa - yfeature)/stridefeature)),
+                newX = floor(1 + ((channels[conlayers.size()-2][0][0].size()+2*xpa - xfeature)/stridefeature));
+            channels.push_back(vector<matrix> (outchan, matrix (newY, list(newX)))); channels.shrink_to_fit();
 
-                biasses.push_back(list(channels[(i*2)+1].size(), 0));
-
-                max.push_back(m);
-                m = !m;
-            }
-            biasses.shrink_to_fit();
-
-            outchan = pow(features, conlay);
-            inANN = outchan * xinANN * yinANN;
-            
-            K = vector<vector<matrix>> (conlay, vector<matrix> (features, matrix (yf, list (xf, 1))));
-            
-            int x = xin + 2*xpa, y = yin + 2* ypa, Nchan = 1;
-            for (int i = 1; i < conlay*2 + 1; i++){
-                channels.push_back(vector<matrix> (Nchan, matrix (y, list (x, 0)))); // create all channels for one layer, filled with zeroes for padding
-
-                if ((i-1) % 2 == 0) { // convolution
-                    x = floor(1 + ((x - xfeature)/stridefeature))+2*xpa;
-                    y = floor(1 + ((y - yfeature)/stridefeature))+2*ypa;
-                    Nchan *= features;
-                } else { // pooling
-                    x = floor(1 + ((x - xpoolwindow)/stridepoolwindow));
-                    y = floor(1 + ((y - ypoolwindow)/stridepoolwindow));
-                }
-            }
-            channels.shrink_to_fit();
-
-            x = xin; y = yin; Nchan = 1;
-            for (int i = 1; i < conlay*2 + 1; i++){
-                if (i == 0) continue;
-                backprop.push_back(vector<matrix> (Nchan, matrix (y, list (x, 0)))); // create all channels for one layer, filled with zeroes for padding
-
-                if ((i-1) % 2 == 0) { // convolution
-                    x = floor(1 + ((x+2*xpa - xfeature)/stridefeature));
-                    y = floor(1 + ((y+2*ypa - yfeature)/stridefeature));
-                    Nchan *= features;
-                } else { // pooling
-                    x = floor(1 + ((x - xpoolwindow)/stridepoolwindow));
-                    y = floor(1 + ((y - ypoolwindow)/stridepoolwindow));
-                }
-            }
-            backprop.shrink_to_fit();
+            inANN = outchan*newX*newY;
         }
 
-        void add_dense_layer (int neuron_count, act_func activation_function, double coefficient = 0.01){
-            Collumn layer (neuron_count);
-            for (int i = 0; i < neuron_count; i++){
-                if (net.size() != 0) layer[i].wgt = list (net[lastlayer].size(), 1);
-                else layer[i].wgt = list (inANN, 1);
+        void add_pooling_layer (bool maxpooling, int xpoolwindow = 2, int ypoolwindow = 2, int stridepoolwindow = 2, int xinput = 0, int yinput = 0){
+            if (fullyconnected) throw runtime_error("No pooling layers should be added after adding a fully connected layer.");
+            if (conlayers.size() == 0){
+                if (xinput == 0 || yinput == 0) throw runtime_error("For the first layer, xinput and yinput should be defined as a number greater than 0.");
+                xin = xinput; yin = yinput;
 
-                layer[i].coef = coefficient;
-
-                if (activation_function != SOFTMAX) layer[i].func = func(activation_function);
-                else layer[i].softmax = true;
+                // adding the input matrix to CNN::channels
+                channels.push_back(vector<matrix> (1, matrix (yin, list (xin))));
             }
-            net.push_back(layer); net.shrink_to_fit();
+            
+            list layer (POOLDETAILS);
+            layer[TYPESPECIFIER] = POOLING;
+            layer[MAXPOOL] = maxpooling;
+            layer[XPOOLWINDOW] = xpoolwindow;
+            layer[YPOOLWINDOW] = ypoolwindow;
+            layer[STRIDEPOOLWINDOW] = stridepoolwindow;
 
-            actlist.push_back(list (neuron_count, 0)); actlist.shrink_to_fit();
+            conlayers.push_back(layer); conlayers.shrink_to_fit();
+            lastconlayer++;
 
-            lastlayer++;
+            int newY = floor(1 + ((channels[conlayers.size()-2][0].size() - ypoolwindow)/stridepoolwindow)),
+                newX = floor(1 + ((channels[conlayers.size()-2][0][0].size() - xpoolwindow)/stridepoolwindow));
+            channels.push_back(vector<matrix> (outchan, matrix (newY, list(newX, 0)))); channels.shrink_to_fit();
+
+            inANN = outchan*newX*newY;
+        }
+
+        void add_dense_layer (int neuron_count, act_func activation_function, type coefficient = 0.01){
+            if (conlayers.size() == 0) throw runtime_error("Please add convolutional or pooling layers first.");
+            fullyconnected = true;
+
+            neural_network::input(inANN);
+            neural_network::add_dense_layer(neuron_count, activation_function, coefficient);
         }
 
         void export_net (bool write_to_terminal = true, bool write_to_file = false){ // method for printing the CNN
-            if (!neural_network::initialised) throw runtime_error("Please run CNN::init or CNN::modify to initialise the CNN.");
+            if (!neural_network::initialised) throw runtime_error("Please run CNN::add_convolutional_layer or CNN::add_pooling_layer and then neural_network::add_dense_layer to initialise the CNN.");
             printconv(write_to_terminal, write_to_file); neural_network::export_net(write_to_terminal, write_to_file);
         }
 
-        // void modify (int xinputs, int yinputs, int outputs, int fflayers, vector<int> ffrows, int conlayers, vector<int> features, vector<bool> pooltype, act_func functions [], double coef = .01, bool learn_coefficients = false, bool paddingvalid = true, int xfeature = 3, int yfeature = 3, int xpoolwindow = 2, int ypoolwindow = 2, int stridepoolwindow = 2, int stridefeature = 1){
-        //     if (!neural_network::initialised) throw runtime_error("Please run CNN::init or CNN::modify to initialise the CNN.");
-        //     if (features.size() != conlayers || pooltype.size()) throw runtime_error("The size of the feature and pooltype list should be the same as the amount of convolutional layers");
-
-        //     matrix().swap(biasses); vector<vector<matrix>>().swap(K); vector<vector<matrix>>().swap(channels);
-            
-        //     xin = xinputs, yin = yinputs;
-        //     xinANN = xinputs; yinANN = yinputs;
-        //     xf = xfeature; yf = yfeature; sf = stridefeature;
-
-        //     xpo = xpoolwindow; ypo = ypoolwindow; spo = stridepoolwindow;
-
-        //     if (paddingvalid){xpa = (xfeature-1)/2; ypa = (yfeature-1)/2;}
-        //     else {xpa = 0; ypa = 0;}
-
-        //     conlay = conlayers;
-
-        //     f = features;
-            
-        //     // initialising feedforward layers
-        //     for (int i = 0; i < conlay; i++){
-        //         xinANN = floor(1 + ((xinANN+2*xpa - xfeature)/stridefeature));
-        //         xinANN = floor(1 + ((xinANN - xpoolwindow)/stridepoolwindow));
-        //         yinANN = floor(1 + ((yinANN+2*ypa - yfeature)/stridefeature));
-        //         yinANN = floor(1 + ((yinANN - ypoolwindow)/stridepoolwindow));
-
-        //         biasses.push_back(list(channels[(i*2)+1].size(), 0));
-        //     }
-        //     biasses.shrink_to_fit();
-
-        //     int outchannels = 1;
-        //     for (int i = 0; i < conlay; i++){
-        //         if (f[i] <= 0) throw runtime_error("All elements of the features list should be above zero.");
-        //         outchannels *= f[i];
-        //     }
-        //     inANN = outchannels * xinANN * yinANN;
-        //     neural_network::modify(inANN, outputs, fflayers, ffrows, functions, coef, learn_coefficients);
-
-        //     //K = vector<vector<matrix>> (conlay, vector<matrix> (features, matrix (yf, list (xf, 1))));
-        //     for (int i = 0; i < conlay; i++) K.push_back(vector<matrix> (f[i], matrix (yf, list(xf, 1))));
-            
-        //     int x = xin, y = yin, Nchan = 1;
-        //     for (int i = 1; i < conlay*2 + 1; i++){
-        //         channels.push_back(vector<matrix> (Nchan, matrix (y, list (x, 0)))); // create all channels for one layer, filled with zeroes for padding
-
-        //         if ((i-1) % 2 == 0) { // convolution
-        //             x = floor(1 + ((x+2*xpa - xfeature)/stridefeature));
-        //             y = floor(1 + ((y+2*ypa - yfeature)/stridefeature));
-        //             Nchan *= f[(i-1)/2];
-        //         } else { // pooling
-        //             x = floor(1 + ((x - xpoolwindow)/stridepoolwindow));
-        //             y = floor(1 + ((y - ypoolwindow)/stridepoolwindow));
-        //         }
-        //     }
-        //     channels.shrink_to_fit();
-            
-        //     max = pooltype;
-        // }
-
-        int calc_out (matrix input){
+        int evaluate (vector<matrix> input){
             if (!neural_network::initialised) throw runtime_error("Please run CNN::init or CNN::modify to initialise the CNN.");
             
+            for (int c = 0; c < input.size(); c++) // looping over the vector of input channels, for example RGBA channels
+                channels[0][c] = input[c];
+
             // convolution and pooling layers
-            matrix I (yf, list (xf)), in (ypo, list (xpo)),
-            padded;
-            list flattened (inANN);
+            matrix I, temp;
 
-            if (insmatrix(channels[0][0], input, xpa, ypa)) throw runtime_error("The input matrix should be of the size previously defined");
+            for (int lay = 0; lay < lastconlayer+1; lay++){ // lastconlayer is an index, +1 makes us iterate over all layers
+                list layer = conlayers[lay];
 
-            int Nchan = -1;
-            for (int i = 1; i < conlay*2 + 1; i++){ // looping through convolution and pooling layers
-                int truelay = floor((i-1)/2);
-                int ch = channels[i].size();
-                for (int j = 0; j < ch; j++){ // looping through the channels
-                    int yim = channels[i][j].size();
+                int ysize = channels[lay+1][0].size(), // first element in conlayers is the input matrix, +1 starts us of at the first convolutional layer
+                    xsize = channels[lay+1][0][0].size(),
+                    ypa = 0, xpa = 0;
+                
+                if (layer[TYPESPECIFIER] == CONVOLUTIONAL){
+                    ypa = layer[YPADDING]; xpa = layer[XPADDING];
 
-                    if (j % ((ch/channels[i-1].size())) == 0) Nchan++; // selecting which channel is being convoluted
-                    if ((i-1) % 2 == 0) {
-                        int ys = channels[i-1][Nchan].size(), xs = channels[i-1][Nchan][0].size();
-                        padded = matrix (ys + 2*ypa, list (xs + 2 * xpa, 0));
+                    I = matrix (layer[YFEATURE], list (layer[XFEATURE]));
+                    temp = matrix (ysize + 2*ypa, list (xsize + 2*xpa, 0));
+                } else I = matrix (layer[YPOOLWINDOW], list (layer[XPOOLWINDOW]));
 
-                        for (int y = 0; y < ys; y++) for (int x = 0; x < xs; x++){
-                            padded[y+ypa][x+xpa] = channels[i-1][Nchan][y][x];
-                        }
-                    } else matrix().swap(padded);
+                for (int chan = 0; chan < channels[lay+1].size(); chan++){
+                    int feature, prevchannel = chan;
+                    if (layer[TYPESPECIFIER] == CONVOLUTIONAL){
+                        int f = layer[FEATURES];
+                        feature = floor(chan / f);
+                        prevchannel = chan % f;
+                    }
 
-                    for (int y = 0; y < yim; y++){ // looping through the channel matrix
-                        int xim = channels[i][j][y].size();
+                    for (int y = 0; y < ysize; y++) for (int x = 0; x < xsize; x++){
+                        if (layer[TYPESPECIFIER] == CONVOLUTIONAL){ // convolution
+                            insmatrix(temp, channels[lay][prevchannel], ypa, xpa);
 
-                        for (int x = 0; x < xim; x++){
+                            for (int yI = 0; yI < layer[YFEATURE]; yI++) for (int xI = 0; xI < layer[XFEATURE]; xI++)
+                                I[yI][xI] = temp[yI + y*layer[STRIDEFEATURE]][xI + x*layer[STRIDEFEATURE]];
 
-                            if ((i-1) % 2 == 0){ // convolution
-                                for (int yI = 0; yI < yf; yI++) for (int xI = 0; xI < xf; xI++)
-                                    I[yI][xI] = padded[yI + y*sf][xI + x*sf];
-                                channels[i][j][y][x] = conv(I, K[truelay][j]) + biasses[truelay][j];
-                            } 
+                            channels[lay+1][chan][y][x] = conv(I, K[layer[CONVOLUTIONINDEX]][feature]);
+                        } else { // pooling
+                            for (int yI = 0; yI < layer[YPOOLWINDOW]; yI++) for (int xI = 0; xI < layer[XPOOLWINDOW]; xI++)
+                                I[yI][xI] = channels[lay][prevchannel][yI + y*layer[STRIDEPOOLWINDOW]][xI + x*layer[STRIDEPOOLWINDOW]];
                             
-                            else { // pooling
-                                for (int yi = 0; yi < ypo; yi++) for (int xi = 0; xi < xpo; xi++)
-                                    in[yi][xi] = channels[i-1][Nchan][yi + y*spo][xi + x*spo];
-                                
-                                channels[i][j][y][x] = pool(in, max[truelay]);
-                            }
+                            channels[lay+1][chan][y][x] = pool(I, layer[MAXPOOL]);
                         }
                     }
                 }
-                Nchan = -1;
             }
 
             // flattening
-            for (int i = 0; i < outchan; i++) for (int j = 0; j < yinANN; j++) for (int k = 0; k < xinANN; k++)
-                flattened.push_back(channels[conlay*2][i][j][k]);
+            list flattened (inANN);
+            for (int i = 0; i < outchan; i++) for (int j = 0; j < channels[lastconlayer+1][0].size(); j++) for (int k = 0; k < channels[lastconlayer][0][0].size(); k++)
+                flattened.push_back(channels[lastconlayer+1][i][j][k]);
             flattened.shrink_to_fit();
 
             return neural_network::evaluate(flattened); // feedforward layers
         }
 
-        void fit (list wanted, double learning_rate, int batch_size = 1){
+        void fit (list wanted, type learning_rate, int batch_size = 1){
             if (!neural_network::initialised) throw runtime_error("Please run CNN::init or CNN::modify to initialise the CNN.");
             
             neural_network::fit(wanted, learning_rate);

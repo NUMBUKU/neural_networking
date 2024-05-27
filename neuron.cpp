@@ -2,26 +2,26 @@
 
 # include "func.c"
 
-using std::vector, std::copy;
+using std::vector;
 
-typedef vector<double> list; // defines a list
+typedef vector<type> list; // defines a list
 typedef vector<list> matrix; // defines a twodimensional list
 typedef struct neur_t {
     list wgt;
-    double bias = 0;
-    double coef;
-    double (*func)(double, double, int);
+    type bias = 0;
+
+    type (*func)(type, type, int);
+    type coef;
     bool softmax = false;
-    double previouschange = 0;
 } neuron; // defines a neuron
 typedef vector<neuron> Collumn; // defines a list of neurons
-typedef vector<Collumn> Net; // defines a multidimensional list of neurons
+typedef vector<Collumn> Net; // defines a twodimensional list of neurons
 
-list softmax (list in, double a){
+list softmax (list in, type a){ // softmax activation function
     int l = in.size();
     list returnval (l);
     
-    double sum = 1;
+    type sum = 1;
     for (int i = 0; i < l; i++) sum += exp(a*in[i]);
 
     for (int i = 0; i < l; i++){
@@ -31,7 +31,7 @@ list softmax (list in, double a){
     return returnval;
 }
 
-list flatten (matrix in){
+list flatten (matrix in){ // function to flatten a matrix into a list
     int col = in.size(); int rows = in[0].size();
     list out (col * rows);
 
@@ -42,7 +42,7 @@ list flatten (matrix in){
     return out;
 }
 
-bool insmatrix (matrix l1, matrix l2, int xpa, int ypa){
+bool insmatrix (matrix l1, matrix l2, int xpa, int ypa){ // function to insert a matrix into a bigger metrix, this is used to add padding
     if (l2.size() != l1.size() + 2*ypa) return 1;
     int size = l1[0].size();
     for (int i = 0; i < l2.size(); i++){
@@ -53,51 +53,59 @@ bool insmatrix (matrix l1, matrix l2, int xpa, int ypa){
 }
 
 
-double calc_z (list act, neuron n){ // calculates what the output of one neuron should be without scaling
-    double a = 0;
+type calc_z (list act, neuron *n){ // calculates what the output of one neuron should be without scaling
+    type a = 0;
     for (int i = 0; i < act.size(); i++){
-        a += act[i] * n.wgt[i];
+        a += act[i] * n->wgt[i];
     }
 
-    return a + n.bias;
+    return a + n->bias;
 }
 
-double calc_act (list act, neuron n){ // calculates what the output of one neuron should be
-    return n.softmax ? calc_z(act, n) : n.func(calc_z(act, n), n.coef, 0);
+type calc_act (list act, neuron *n){ // calculates what the output of one neuron should be
+    return n->softmax ? calc_z(act, n) : n->func(calc_z(act, n), n->coef, 0);
 }
 
-list calc_impact (list act, neuron n, double wanted, double out, loss_func function){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
+list calc_impact (list act, neuron *n, type wanted, type out, loss_func function, bool lcoef){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
     int size = act.size();
     list return_list;
 
-    double dcdz = lfunc(function)(out, wanted, 1);
-    if (n.softmax) dcdz *= out - out*out;
-    else dcdz *= n.func(calc_z(act, n), n.coef, 1);
+    type z = calc_z(act, n),
+    dcdz = lfunc(function)(out, wanted, 1);
+
+    if (lcoef) return_list.push_back(dcdz * n->func(z, n->coef, 2));
+
+    if (n->softmax) dcdz *= out - out*out;
+    else dcdz *= n->func(z, n->coef, 1);
 
     return_list.push_back(dcdz); //calculating the impact of the bias
 
     for (int i = 0; i < size; i++) return_list.push_back(dcdz * act[i]); //calculating the impact of the weights
 
-    for (int i = 0; i < size; i++) return_list.push_back(dcdz * n.wgt[i]); //calculating the impact of the previous activations
+    for (int i = 0; i < size; i++) return_list.push_back(dcdz * n->wgt[i]); //calculating the impact of the previous activations
 
     return_list.shrink_to_fit();
 
     return return_list;
 }
 
-list calc_impact (list act, neuron n, double out){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
+list calc_impact (list act, neuron *n, type out, bool lcoef){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
     int size = act.size();
     list return_list;
 
-    double dcdz;
-    if (n.softmax) dcdz = out - out*out;
-    else dcdz = n.func(calc_z(act, n), n.coef, 1);
+    type z = calc_z(act, n),
+    dcdz;
+    
+    if (n->softmax) dcdz = out - out*out;
+    else dcdz = n->func(z, n->coef, 1);
+
+    if (lcoef) return_list.push_back(n->func(z, n->coef, 2));
 
     return_list.push_back(dcdz); //calculating the impact of the bias
 
     for (int i = 0; i < size; i++) return_list.push_back(dcdz * act[i]); //calculating the impact of the weights
 
-    for (int i = 0; i < size; i++) return_list.push_back(dcdz * n.wgt[i]); //calculating the impact of the previous activations
+    for (int i = 0; i < size; i++) return_list.push_back(dcdz * n->wgt[i]); //calculating the impact of the previous activations
 
     return_list.shrink_to_fit();
 

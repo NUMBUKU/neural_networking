@@ -1,47 +1,61 @@
 # include <math.h>
 
+// define type
+# ifdef FLOAT
+    typedef float type;
+# else
+    typedef double type;
+# endif // FLOAT
+
 // some activation functions
 // sigmoids
 
-double binstep(double in, double a, int der);
+type binstep(type in, type a, int der);
 
-double hyptan (double in, double a, int der){ // scaling function from -1 to 1
-    double c;
+type hyptan (type in, type a, int der){ // scaling function from -1 to 1
+    if (der == 2) return 0;
+    type c;
     if (der == 1) c = cosh(in);
     return der ? 1/(c*c) : tanh(in);
 }
 
-double normhyptan (double in, double a, int der){ // scaling function from 0 to 1
-    double c;
+type normhyptan (type in, type a, int der){ // scaling function from 0 to 1
+    if (der == 2) return 0;
+    type c;
     if (der == 1) c = cosh(in);
     return der ? 1/(2 * c*c) : (tanh(in)+1)/2;
 }
 
-double arctan (double in, double a, int der){
+type arctan (type in, type a, int der){
+    if (der == 2) return 0;
     return der ? 1/(1+in*in) : atan(in);
 }
 
-double normarctan (double in, double a, int der){
+type normarctan (type in, type a, int der){
+    if (der == 2) return 0;
     return der ? 1/(2+2*in*in) : (atan(in)+1)/2;
 }
 
-double sigmoid (double in, double a, int der){ // scaling function from 0 to 1
-    double c;
+type sigmoid (type in, type a, int der){ // scaling function from 0 to 1
+    if (der == 2) return 0;
+    type c;
     if (der == 1) c = 1+exp(in);
     return der ? (exp(in))/(c*c) : 1/(1 + exp(-1*in));
 }
 
 // linear units
 
-double identity (double in, double a, int der){
+type identity (type in, type a, int der){
+    if (der == 2) return 0;
     return der ? 1 : in;
 }
 
-double ReLU (double in, double a, int der){
+type ReLU (type in, type a, int der){
+    if (der == 2) return 0;
     return der ? (in <= 0 ? 0 : 1) : (in <= 0 ? 0 : in);
 }
 
-double LeakyReLU (double in, double a, int der){
+type LeakyReLU (type in, type a, int der){
     if (der == 1) // ∂f/∂in
         return in <= 0 ? a : 1;
     
@@ -51,11 +65,12 @@ double LeakyReLU (double in, double a, int der){
     return in <= 0 ? in * a : in;
 }
 
-double SiLU (double in, double a, int der){
+type SiLU (type in, type a, int der){
+    if (der == 2) return 0;
     return der ? in * sigmoid(in, a, 1) + sigmoid(in, a, 0) : in * sigmoid(in, a, 0);
 }
 
-double ExLU (double in, double a, int der){
+type ExLU (type in, type a, int der){
     if (der == 1) // ∂f/∂in
         return in <= 0 ? a * exp(in) : 1;
     
@@ -65,21 +80,23 @@ double ExLU (double in, double a, int der){
     return in <= 0 ? a * (exp(in) - 1) : in;
 }
 
-double SoftPlus (double in, double a, int der){
+type SoftPlus (type in, type a, int der){
+    if (der == 2) return 0;
     return der ? sigmoid(in,a,0) : log(1+exp(in));
 }
 
-double binstep(double in, double a, int der){
+type binstep(type in, type a, int der){
+    if (der == 2) return 0;
     return der ? 0 : ReLU(in, a, 1);
 }
 
 
 enum act_func{ // classification for the activation functions
-    BINSTEP,SIGMOID,TANH,NTANH,ARCTAN,NARCTAN,SOFTMAX,
-    IDENTITY,RELU,LEAKYRELU,SILU,ELU,SOFTPLUS
+    BINSTEP,SIGMOID,TANH,NTANH,ARCTAN,NARCTAN,SOFTMAX, // sigmoids
+    IDENTITY,RELU,LEAKYRELU,SILU,ELU,SOFTPLUS // linear units
 };
 
-double (*func(act_func f))(double, double, int){
+type (*func(act_func f))(type, type, int){
     switch (f){
         case TANH:
             return &hyptan;
@@ -112,26 +129,26 @@ double (*func(act_func f))(double, double, int){
 
 // some loss functions
 
-double mean_squared (double y, double ypred, int der){
-    double dif = y - ypred;
+type mean_squared (type y, type ypred, int der){
+    type dif = y - ypred;
     return der ? 2 * dif : dif * dif;
 }
 
-double cross_entropy (double y, double ypred, int der){
+type cross_entropy (type y, type ypred, int der){
     return der ? -1*ypred/y : -1*ypred*log(y);
 }
 
-double MAPE (double y, double ypred, int der){
-    double dif = y - ypred;
+type MAPE (type y, type ypred, int der){
+    type dif = y - ypred;
     return der ? 100*(dif > 0 ? 1 : -1)/ypred : 100*abs(dif)/ypred;
 }
 
 
-enum loss_func{
+enum loss_func{ // classification for the loss functions
     MEAN_SQUARED,CROSS_ENTROPY,MAPD
 };
 
-double (*lfunc(loss_func function))(double, double, int){
+type (*lfunc(loss_func function))(type, type, int){
     switch (function){
         case MEAN_SQUARED:
             return &mean_squared;
