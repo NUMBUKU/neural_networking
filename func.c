@@ -27,13 +27,25 @@ type normhyptan (type in, type a, int der){ // scaling function from 0 to 1
 }
 
 type arctan (type in, type a, int der){
-    if (der == 2) return 0;
-    return der ? 1/(1+in*in) : atan(in);
+    switch (der){
+        case 1:
+            return 1/(1+in*in);
+        case 2:
+            return 0;
+        default:
+            return atan(in);
+    }
 }
 
 type normarctan (type in, type a, int der){
-    if (der == 2) return 0;
-    return der ? 1/(2+2*in*in) : (atan(in)+1)/2;
+    switch (der){
+        case 1:
+            return 1/(2+2*in*in);
+        case 2:
+            return 0;
+        default:
+            return (atan(in)+1)/2;
+    }
 }
 
 type sigmoid (type in, type a, int der){ // scaling function from 0 to 1
@@ -46,38 +58,62 @@ type sigmoid (type in, type a, int der){ // scaling function from 0 to 1
 // linear units
 
 type identity (type in, type a, int der){
-    if (der == 2) return 0;
-    return der ? 1 : in;
+    switch (der){
+        case 1:
+            return 1;
+        case 2:
+            return 0;
+        default:
+            return in;
+    }
 }
 
 type ReLU (type in, type a, int der){
-    if (der == 2) return 0;
-    return der ? (in <= 0 ? 0 : 1) : (in <= 0 ? 0 : in);
+    switch (der){
+        case 1:
+            return in < 0 ? 0 : 1;
+        case 2:
+            return 0;
+        default:
+            return in < 0 ? 0 : in;
+    }
 }
 
 type LeakyReLU (type in, type a, int der){
-    if (der == 1) // ∂f/∂in
-        return in <= 0 ? a : 1;
-    
-    if (der == 2) // ∂f/∂a
-        return in <= 0 ? in : 0;
-    
-    return in <= 0 ? in * a : in;
+    switch (der){
+        case 1:
+            return in < 0 ? a : 1;
+        case 2:
+            return in < 0 ? in : 0;
+        default:
+            return in < 0 ? in * a : in;
+    }
 }
 
 type SiLU (type in, type a, int der){
-    if (der == 2) return 0;
-    return der ? in * sigmoid(in, a, 1) + sigmoid(in, a, 0) : in * sigmoid(in, a, 0);
+    switch (der){
+        case 1:
+            return in * a * sigmoid(a*in, a, 1) + sigmoid(a*in, a, 0);
+        case 2:
+            return in * in * sigmoid (a*in, a, 1);
+        default:
+            return in * sigmoid(a*in, a, 0);
+    }
 }
 
 type ExLU (type in, type a, int der){
-    if (der == 1) // ∂f/∂in
-        return in <= 0 ? a * exp(in) : 1;
-    
-    if (der == 2) // ∂f/∂a
-        return in <= 0 ? exp(in) - 1 : 0;
-    
-    return in <= 0 ? a * (exp(in) - 1) : in;
+    switch (der){
+        case 1:
+            return in < 0 ? a * exp(in) : 1;
+        case 2:
+            return in < 0 ? exp(in) - 1 : 0;
+        default:
+            return in < 0 ? a * (exp(in) - 1) : in;
+    }
+}
+
+type GeLU (type in, type a, int der){
+    return SiLU(in, 1.702, der); // an aproximation of Gaussian Error Linear Unit
 }
 
 type SoftPlus (type in, type a, int der){
@@ -93,7 +129,7 @@ type binstep(type in, type a, int der){
 
 enum act_func{ // classification for the activation functions
     BINSTEP,SIGMOID,TANH,NTANH,ARCTAN,NARCTAN,SOFTMAX, // sigmoids
-    IDENTITY,RELU,LEAKYRELU,SILU,ELU,SOFTPLUS // linear units
+    IDENTITY,RELU,LEAKYRELU,SILU,ELU,GELU,SOFTPLUS // linear units
 };
 
 type (*func(act_func f))(type, type, int){
@@ -116,6 +152,8 @@ type (*func(act_func f))(type, type, int){
             return &SiLU;
         case ELU:
             return &ExLU;
+        case GELU:
+            return &GeLU;
         case SOFTPLUS:
             return &SoftPlus;
         case BINSTEP:
@@ -134,6 +172,11 @@ type mean_squared (type y, type ypred, int der){
     return der ? 2 * dif : dif * dif;
 }
 
+type norm_mean_squared (type y, type ypred, int der){
+    type dif = y - ypred;
+    return der ? dif : .5 * dif * dif;
+}
+
 type cross_entropy (type y, type ypred, int der){
     return der ? -1*ypred/y : -1*ypred*log(y);
 }
@@ -145,13 +188,15 @@ type MAPE (type y, type ypred, int der){
 
 
 enum loss_func{ // classification for the loss functions
-    MEAN_SQUARED,CROSS_ENTROPY,MAPD
+    MEAN_SQUARED,NMEAN_SQUARED,CROSS_ENTROPY,MAPD
 };
 
 type (*lfunc(loss_func function))(type, type, int){
     switch (function){
         case MEAN_SQUARED:
             return &mean_squared;
+        case NMEAN_SQUARED:
+            return &norm_mean_squared;
         case CROSS_ENTROPY:
             return &cross_entropy;
         case MAPD:

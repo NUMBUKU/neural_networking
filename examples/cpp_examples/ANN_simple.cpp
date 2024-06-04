@@ -1,13 +1,11 @@
 # include <iostream>
 
-# include "neural_net.cpp"
+// # define FLOAT
+# include "..\..\neural_net.cpp"
 
 using std::cout, std::ostream;
 
-const type const_learning_rate = 1,
-    initial_learning_rate = .2,
-    decay = 1;
-
+const double learning_rate = 1;
 
 // Template to print a vector using cout. Credit: geeksforgeeks.org
 template <typename S> ostream& operator<<(ostream& os, const vector<S>& vector){
@@ -15,24 +13,21 @@ template <typename S> ostream& operator<<(ostream& os, const vector<S>& vector){
     return os;
 }
 
-vector<list> inputlists = {{0}, {1}, {-1}, {.5}, {-.5}, {2}},
-wantedlists {{0}, {-1}, {1}, {-.5}, {.5}, {-2}};
-
-
-type lr (int epoch){
-    return initial_learning_rate/(1+decay*epoch);
-    // return const_learning_rate;
-}
+vector<list> inputlists = {{-2}, {1}, {-1}, {.5}, {-.5}, {2}},
+wantedlists {{2}, {-1}, {1}, {-.5}, {.5}, {-2}};
 
 int main (){
-    neural_network net;
-    net.add_dense_layer(1, IDENTITY, 1, 0.01);
+    ANN net;
+    net.add_input(1);
+    net.add_dense_layer(1, IDENTITY, 0.01);
 
-    type cost = 0;
+    double cost = 0;
     for (int epoch = 0; epoch < 50; epoch++) for (int iteration = 0; iteration < 6; iteration++){
         net.evaluate(inputlists[iteration]);
-        net.fit(wantedlists[iteration], lr(epoch), 1);
-        cost += net.calc_loss(wantedlists[iteration]);
+
+        net.fit(wantedlists[iteration], learning_rate, 6);
+
+        cost += net.loss(wantedlists[iteration]);
         if (iteration == 5){
             cout << "cost:" << cost/6 << "\n";
             cost = 0;

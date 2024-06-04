@@ -6,9 +6,12 @@ using std::vector;
 
 typedef vector<type> list; // defines a list
 typedef vector<list> matrix; // defines a twodimensional list
-typedef struct neur_t {
+typedef struct {
     list wgt;
     type bias = 0;
+
+    // list dcdw; // das 28-32B erbij per neuron!! doe anders
+    // type dcdb;
 
     type (*func)(type, type, int);
     type coef;
@@ -16,6 +19,19 @@ typedef struct neur_t {
 } neuron; // defines a neuron
 typedef vector<neuron> Collumn; // defines a list of neurons
 typedef vector<Collumn> Net; // defines a twodimensional list of neurons
+
+
+const int CONVDETAILS = 7, // amount of details used to define a convolutional layer
+    POOLDETAILS = 5; // amount of details used to define a pooling layer
+
+typedef struct {
+    bool type;
+    union {
+        int convolutional[CONVDETAILS];
+        int pooling[POOLDETAILS];
+    };
+    
+} layerdetails;
 
 list softmax (list in, type a){ // softmax activation function
     int l = in.size();
@@ -32,10 +48,10 @@ list softmax (list in, type a){ // softmax activation function
 }
 
 list flatten (matrix in){ // function to flatten a matrix into a list
-    int col = in.size(); int rows = in[0].size();
-    list out (col * rows);
+    int col = in.size();
+    list out;
 
-    for (int i = 0; i < col; i++) for (int j = 0; j < rows; j++)
+    for (int i = 0; i < col; i++) for (int j = 0; j < in[i].size(); j++)
         out.push_back(in[i][j]);
     out.shrink_to_fit();
 
@@ -53,7 +69,7 @@ bool insmatrix (matrix l1, matrix l2, int xpa, int ypa){ // function to insert a
 }
 
 
-type calc_z (list act, neuron *n){ // calculates what the output of one neuron should be without scaling
+type calc_z (list act, neuron * n){ // calculates what the output of one neuron should be without scaling
     type a = 0;
     for (int i = 0; i < act.size(); i++){
         a += act[i] * n->wgt[i];
@@ -62,11 +78,11 @@ type calc_z (list act, neuron *n){ // calculates what the output of one neuron s
     return a + n->bias;
 }
 
-type calc_act (list act, neuron *n){ // calculates what the output of one neuron should be
+type calc_act (list act, neuron * n){ // calculates what the output of one neuron should be
     return n->softmax ? calc_z(act, n) : n->func(calc_z(act, n), n->coef, 0);
 }
 
-list calc_impact (list act, neuron *n, type wanted, type out, loss_func function, bool lcoef){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
+list calc_impact (list act, neuron * n, type wanted, type out, loss_func function, bool lcoef){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
     int size = act.size();
     list return_list;
 
@@ -80,26 +96,26 @@ list calc_impact (list act, neuron *n, type wanted, type out, loss_func function
 
     return_list.push_back(dcdz); //calculating the impact of the bias
 
-    for (int i = 0; i < size; i++) return_list.push_back(dcdz * act[i]); //calculating the impact of the weights
-
-    for (int i = 0; i < size; i++) return_list.push_back(dcdz * n->wgt[i]); //calculating the impact of the previous activations
-
+    for (int i = 0; i < size; i++){
+        return_list.push_back(dcdz * act[i]); //calculating the impact of the weights
+        return_list.push_back(dcdz * n->wgt[i]); //calculating the impact of the previous activations
+    }
     return_list.shrink_to_fit();
 
     return return_list;
 }
 
-list calc_impact (list act, neuron *n, type out, bool lcoef){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
+list calc_impact (list act, neuron * n, type out, bool lcoef){ // returns a list to indicate which variable has the most impact on the cost and how much it should change
     int size = act.size();
     list return_list;
 
     type z = calc_z(act, n),
     dcdz;
+
+    if (lcoef) return_list.push_back(n->func(z, n->coef, 2));
     
     if (n->softmax) dcdz = out - out*out;
     else dcdz = n->func(z, n->coef, 1);
-
-    if (lcoef) return_list.push_back(n->func(z, n->coef, 2));
 
     return_list.push_back(dcdz); //calculating the impact of the bias
 
