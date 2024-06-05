@@ -20,21 +20,6 @@ class ANN {
             if (layer){
                 for (int w = 0; w < net[layer][index].wgt.size(); w++) calc_previous(layer, w, net[layer][index].wgt[w]);
             }
-            // list impact_list;
-            // int wgtsize = net[layer][index].wgt.size();
-
-            // if (layer == 0) impact_list = calc_impact(in, &net[layer][index], actlist[lastlayer][index], learn_coeffficents);
-            // else impact_list = calc_impact(actlist[layer-1], &net[layer][index], actlist[lastlayer][index], learn_coeffficents);
-
-            // if (learn_coeffficents) net[layer][index].coef -= lr * dcda * impact_list[0] / batch_size;
-            // net[layer][index].bias -= lr * dcda * impact_list[learn_coeffficents] / batch_size;
-
-
-            // for (int j = 0; j < wgtsize; j++){
-            //     net[layer][index].wgt[j] -= lr * dcda * impact_list[j+1+learn_coeffficents] / batch_size;
-            //     if (layer != 0) calc_previous(layer-1, j, dcda * impact_list[j+wgtsize+1+learn_coeffficents], lr, batch_size);
-            //     else dcdin[j] = impact_list[j+wgtsize+1];
-            // }
         }
     public:
         // variables for middle and output layers of the net
@@ -50,10 +35,7 @@ class ANN {
         lastlayer = -1, // variable for storing the index of the last layer
         incount;
 
-        unsigned long long iteration = 0; // variable for storing the number of feed forward cycles the net has gone through
-
-        bool learn_coeffficents = false; // boolean for storing if the user wants the net to learn the coefficients of the activation functions by itself
-        
+        unsigned long long iteration = 0; // variable for storing the number of feed forward cycles the net has gone through        
 
         void add_input (int input_count){
             if (input_count <= 0) throw runtime_error("input_count should be greater than zero.");
@@ -170,7 +152,7 @@ class ANN {
             return cost;
         }
 
-        void fit (list wanted, type learning_rate, int batch_size = 1, loss_func function = MEAN_SQUARED){ // improves the net by trying to lower the cost (only works if ANN::calc_out has already been run)
+        void fit (list wanted, type learning_rate, int batch_size = 1, loss_func function = MEAN_SQUARED, bool learn_coeffficents = false){ // improves the net by trying to lower the cost (only works if ANN::calc_out has already been run)
             int outsize = net[lastlayer].size();
             list impact_list;
 
@@ -180,7 +162,7 @@ class ANN {
 
             if (lastlayer) list (net[lastlayer-1].size(), 1).swap(dcda[lastlayer-1]);
 
-            for (int neur = 0; neur < outsize; neur++){ // looping over output neurons
+            for (int neur = 0; neur < outsize; neur++){ // looping over output neurons to change their parameters and calculate the derivative with respect to the activation of previous layer
                 int wgtsize = net[lastlayer][neur].wgt.size();
 
                 if (lastlayer == 0) impact_list = calc_impact(in, &net[lastlayer][neur], wanted[neur], actlist[lastlayer][neur], function, learn_coeffficents);
@@ -195,15 +177,39 @@ class ANN {
                 }
             }
 
-            if (lastlayer){
-                for (int bblay = lastlayer-1; bblay >= 0; bblay++){ // looping through blackbox layers
-                    int ncount = dcda[bblay].size();
+            // calculating the rest of the derivatives
+            for (int bblay = lastlayer-2; bblay >= -1; bblay++){ // looping through blackbox layers and input layer
+                int ncount;
+                list * impactlayer;
 
-                    list (ncount, 1).swap(dcda[bblay]);
-                    
-                    for (int i = 0; i < ncount; i++) dcda[bblay][i] *= net[bblay+1];
-                }
+                if (bblay != -1) impactlayer = &dcda[bblay];
+                else impactlayer = &dcdin;
+
+                ncount = ( * impactlayer ).size();
+                list (ncount, 1).swap( * impactlayer );
+                
+                for (int neur = 0; net[bblay+1].size(); neur++) for (int w = 0; w < ncount; w++)
+                    ( * impactlayer )[w] *= net[bblay+1][neur].wgt[w];
             }
+
+            for (int layer = 0; layer < lastlayer; layer++) // changing the middle layers
+                for (int neur = 0; neur < net[layer].size(); layer++){
+                    list impact_list;
+                    int wgtsize = net[layer][neur].wgt.size();
+
+                    double constant = learning_rate / batch_size;
+
+                    if (layer == 0) impact_list = calc_impact(in, &net[layer][neur], actlist[lastlayer][neur], learn_coeffficents);
+                    else impact_list = calc_impact(actlist[layer-1], &net[layer][neur], actlist[lastlayer][neur], learn_coeffficents);
+
+                    if (learn_coeffficents) net[layer][neur].coef -= constant * dcda[layer][neur] * impact_list[0];
+                    net[layer][neur].bias -= constant * dcda[layer][neur] * impact_list[learn_coeffficents];
+
+
+                    for (int j = 0; j < wgtsize; j++)
+                        net[layer][neur].wgt[j] -= constant * dcda[layer][neur] * impact_list[j+1+learn_coeffficents];
+                }
+            
         }
 };
 

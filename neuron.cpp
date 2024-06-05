@@ -121,8 +121,6 @@ list calc_impact (list act, neuron * n, type out, bool lcoef){ // returns a list
 
     for (int i = 0; i < size; i++) return_list.push_back(dcdz * act[i]); //calculating the impact of the weights
 
-    for (int i = 0; i < size; i++) return_list.push_back(dcdz * n->wgt[i]); //calculating the impact of the previous activations
-
     return_list.shrink_to_fit();
 
     return return_list;

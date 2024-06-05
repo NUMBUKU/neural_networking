@@ -73,20 +73,23 @@ This is an enum class. It defines a few activation functions. They are named app
 ```C++
 enum act_func{ // classification for the activation functions
     BINSTEP,SIGMOID,TANH,NTANH,ARCTAN,NARCTAN,SOFTMAX, // sigmoids
-    IDENTITY,RELU,LEAKYRELU,SILU,ELU,SOFTPLUS // linear units
+    IDENTITY,RELU,LEAKYRELU,SILU,ELU,GELU,SOFTPLUS // linear units
 };
 ```
-BINSTEP is binarystep.
+BINSTEP is binarystep and SILU is Sigmoid weighted Linear Unit, also called swish.
 The N before some of the sigmoids means that they are normalised between zero and one.
+
+LeakyReLU and ELU are parametric.
+GELU is approximated as SiLU(1.702*x) as suggested in [this paper](https://arxiv.org/pdf/1606.08415v5).
 
 ## neural_networking::loss_func
 This is an enum class. It defines a few loss functions. They are named appropiately:
 ```C++
 enum loss_func{ // classification for the loss functions
-    MEAN_SQUARED,CROSS_ENTROPY,MAPD
+    MEAN_SQUARED,NMEANSQUARED,CROSS_ENTROPY,MAPD
 };
 ```
-MAPD is Mean Absolute Percentage Deviation/Error
+MAPD is Mean Absolute Percentage Deviation/Error and NMEANSQUARED is mean squared loss multiplied by a half to 'normalise' it by losing the constant factor in the derivative.
 
 ## neural_networking::ANN
 Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would look like this:
@@ -109,6 +112,7 @@ net.add_dense_layer(1, RELU);
 * `bool initialised` Set to false by default. Boolean for storing if the net was initialised.
 
 ### Public methods
+---
 #### ANN::add_input
 Adds the input neurons to the net.
 Takes the following arguments:
@@ -188,7 +192,7 @@ Can throw the following errors:
 No return value.
 
 ## neural_networking::CNN
-A Convolutional Neural Network, made for image classification but has wide applications. A CNN called net with a ten by ten input, one convolution layer, one pooling layer and one neuron with relu activation would look like this:
+A Convolutional Neural Network, made for image classification but has wide applications. A CNN called net with a ten by ten input, one convolution layer, one maxpooling layer and one neuron with relu activation would look like this:
 ```C++
 CNN net;
 net.input(10, 10);
@@ -197,15 +201,15 @@ net.add_pooling_layer(true);
 net.add_dense_layer(1, RELU);
 ```
 ### Public variables
-`vector<vector<matrix>> K`
-`vector<vector<matrix>> channels`
-`vector<vector<matrix>> backprop`
-`matrix biasses`
-`matrix conlayers`
-`int xin, yin`
-`int inANN`
-`int outchan`
-`int lastconlayer`
+* `vector<vector<matrix>> K`
+* `vector<vector<matrix>> channels`
+* `vector<vector<matrix>> backprop`
+* `matrix biasses`
+* `matrix conlayers`
+* `int xin, yin`
+* `int inANN`
+* `int outchan`
+* `int lastconlayer`
 ### Public methods
 
 
