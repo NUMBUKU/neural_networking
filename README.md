@@ -7,7 +7,7 @@ The basic structure is like the following: there is a file, func.c, which define
 
 # typedefs
 
-## type
+### type
 I wanted to make the type user defined so I used the following code:
 ```C++
 # ifdef FLOAT
@@ -24,7 +24,7 @@ I wanted to make the type user defined so I used the following code:
 Take in mind that `double` has double the precision of `float` type, but `float` (size: 4B) requires half the memory space `double` (size: 8B) does. It is a tradeoff. `double` is the default due to personal preference.
 
 ---
-## list and matrix
+### list and matrix
 `list` is a vector of `type` defined like this:
 ```C++
 typedef std::vector<type> list; // defines a list
@@ -36,11 +36,11 @@ typedef std::vector<list> matrix; // defines a twodimensional list
 These are both defined outside the neural_networking namespace.
 
 ---
-## neural_networking::neuron
+### neural_networking::neuron
 `neural_networking::neuron` is a structure which entails all the variables needed to define a neuron/node of a neural net.
 
 ---
-## neural_networking::Collumn and neural_networking::net
+### neural_networking::Collumn and neural_networking::net
 In esscence the same as list and matrix, just heat they are vectors of neurons, defined like this:
 ```C++
 typedef std::vector<neuron> Collumn; // defines a list of neurons
@@ -49,7 +49,7 @@ typedef std::vector<Collumn> Net; // defines a twodimensional list of neurons
 
 # functions
 
-## neural_networking::flatten
+### neural_networking::flatten
 `neural_networking::flatten` is used to, well, flatten an input matrix into a vector. It goes left to right and down.
 Takes the following arguments:
 * `matrix in` The input matrix to be flattened
@@ -57,7 +57,7 @@ Takes the following arguments:
 Returns the vector of the flattened elements.
 
 ---
-## neural_networking::softmax
+### neural_networking::softmax
 `neural_networking::softmax` is the famous function used throughout data analysis, probability and such. (you should just look it up)
 Takes the following arguments:
 * `list in` the input vector to be normalised.
@@ -68,7 +68,7 @@ returns the normalised vector.
 
 # classes
 
-## neural_networking::act_func
+### neural_networking::act_func
 This is an enum class. It defines a few activation functions. They are named appropiately:
 ```C++
 enum act_func{ // classification for the activation functions
@@ -82,7 +82,7 @@ The N before some of the sigmoids means that they are normalised between zero an
 LeakyReLU and ELU are parametric.
 GELU is approximated as SiLU(1.702*x) as suggested in [this paper](https://arxiv.org/pdf/1606.08415v5).
 
-## neural_networking::loss_func
+### neural_networking::loss_func
 This is an enum class. It defines a few loss functions. They are named appropiately:
 ```C++
 enum loss_func{ // classification for the loss functions
@@ -92,27 +92,21 @@ enum loss_func{ // classification for the loss functions
 MAPD is Mean Absolute Percentage Deviation/Error and NMEANSQUARED is mean squared loss multiplied by a half to 'normalise' it by losing the constant factor in the derivative.
 
 ## neural_networking::ANN
-Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would look like this:
+Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would be defined like this:
 ```C++
-ANN net;
-net.add_input(1);
-net.add_dense_layer(1, RELU);
+ANN net;                        // create the ANN
+net.add_input(1);               // add the input
+net.add_dense_layer(1, RELU);   // add a neuron layer
 ```
 ### Public variables
 * `Net net` Vector used to store the neurons.
 * `matrix actlist` Vector used to store neuron activations.
-* `list in` Vector to store the given input of the net.
 * `list outlist` Vector to store the activation of the neurons in the output layer.
 * `type certainty` Variable for storing the certainty of the net.
 * `int out_index` Set to zero by default. Variable for storing the index of the highest value in ANN::outlist.
-* `int lastlayer` Set to negative one by default. Variable for storing the index of the last layer in ANN::net and ANN::actlist.
 * `unsigned long long iteration` Set to zero by default. Stores the number of feed forward cycles the net has gone through.
-* `type coef` Variable for defining the extra coefficients in the activation functions.
-* `bool learn_coefficients` Boolean for storing if the user wants the net to learn the coefficients of the activation functions by itself.
-* `bool initialised` Set to false by default. Boolean for storing if the net was initialised.
 
 ### Public methods
----
 #### ANN::add_input
 Adds the input neurons to the net.
 Takes the following arguments:
@@ -122,7 +116,7 @@ Can throw the following errors:
 * `std::runtime_error("input_count should be greater than zero.");`
 * `std::runtime_error("Input was already defined.");`
 
-No return value.
+No return value. `input_count` is also stored in `ANN::incount`.
 
 ---
 #### ANN::add_dense_layer
@@ -144,7 +138,7 @@ This function can write the data to the terminal but it can also make a new file
 Takes the following arguments:
 * `bool write_to_terminal` Set to true by default. Specifies if the user wants to write the data to the terminal.
 * `bool write_to_file` Set to false by default. Specifies if the user wants to write the data to a file. 
-* `char * path` Set to "data.txt" by default. Sets the path that the file should be made at or the path of the file it should write to.
+* `const char * path` Set to "data.txt" by default. Sets the path that the file should be made at or the path of the file it should write to.
 
 Can throw the following errors:
 * `std::runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");`
@@ -152,7 +146,7 @@ Can throw the following errors:
 No return value.
 
 ---
-#### ANN::evaluate
+#### ANN::eval
 Feeds the given input through the network to predict an output.
 Takes the following arguments:
 * `list input` The given input to the net.
@@ -165,15 +159,15 @@ Returns the index of the highest value in `ANN::outlist`. This is also stored in
 
 ---
 #### ANN::loss
-Calculates the loss for a single feed-forward cycle. Only works when ANN::evaluate has already been run.
+Calculates the loss for a single feed-forward cycle. Only works when ANN::eval has already been run.
 Takes the following arguments:
-* `list wanted` The list of output that is the target of the net, given the previously evaluated input.
-* `loss_func function` Set to MEAN_SQUARED by default. It sets the loss function by which the net should be evaluated. See [loss_func](#loss_func).
+* `list wanted` The list of output that is the target of the net, given the previously evald input.
+* `loss_func function` Set to MEAN_SQUARED by default. It sets the loss function by which the net should be evald. See [loss_func](#loss_func).
 
 Can throw the following errors:
 * `std::runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");`
 * `std::runtime_error("Wanted list should be the same size as the number of outputs");`
-* `std::runtime_error("This method only works if ANN::evaluate has already been run.");`
+* `std::runtime_error("This method only works if ANN::eval has already been run.");`
 
 Returns the calculated loss.
 
@@ -181,10 +175,10 @@ Returns the calculated loss.
 #### ANN::fit
 This method is used for curve-fitting the network.
 Takes the following arguments:
-* `list wanted` The list of output that is the target of the net, given the previously evaluated input.
+* `list wanted` The list of output that is the target of the net, given the previously evald input.
 * `type learning_rate` Sets the learning rate of this iteration.
 * `int batch_size` Set to one by default. It sets the size of the batches.
-* `loss_func function` Set to MEAN_SQUARED by default. It sets the loss function by which the net should be evaluated. See [loss_func](#loss_func).
+* `loss_func function` Set to MEAN_SQUARED by default. It sets the loss function by which the net should be evald. See [loss_func](#loss_func).
 
 Can throw the following errors:
 * `std::runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");`
@@ -192,13 +186,13 @@ Can throw the following errors:
 No return value.
 
 ## neural_networking::CNN
-A Convolutional Neural Network, made for image classification but has wide applications. A CNN called net with a ten by ten input, one convolution layer, one maxpooling layer and one neuron with relu activation would look like this:
+A Convolutional Neural Network, made for image classification but has wide applications. A CNN called net with a ten by ten input, one convolution layer, one maxpooling layer and one neuron with relu activation would be defined like this:
 ```C++
-CNN net;
-net.input(10, 10);
-net.add_convolutional_layer(1, false);
-net.add_pooling_layer(true);
-net.add_dense_layer(1, RELU);
+CNN net;                                // create the CNN
+net.input(10, 10);                      // add the input
+net.add_convolutional_layer(1, false);  // add a convolutional layer
+net.add_pooling_layer(true);            // add a maxpooling layer
+net.add_dense_layer(1, RELU);           // add a neuron layer
 ```
 ### Public variables
 * `vector<vector<matrix>> K`

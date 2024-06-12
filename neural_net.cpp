@@ -11,29 +11,23 @@ class ANN {
     protected: // used in inherited classes
         list dcdin;
         bool initialised = false,
-        inputinitialised = false;
+        inputinitialised = false,
+        inheritance = false;
     private:
         matrix dcda;
-
-        void calc_previous (int layer, int index, type da){ // recursive method for changing the previous activation
-            dcda[layer-1][index] *= da; // minus one, because dcda does not contai the last layer of the net
-            if (layer){
-                for (int w = 0; w < net[layer][index].wgt.size(); w++) calc_previous(layer, w, net[layer][index].wgt[w]);
-            }
-        }
+        list in; // variable for storing the given input of the net
+        int lastlayer = -1, // variable for storing the index of the last layer
+        incount; // number of inputs
     public:
         // variables for middle and output layers of the net
         Net net;
         matrix actlist;
         
-        list in, // variable for storing the given input of the net
-        outlist; // variable for storing the output list of the net (the same as actlist[lastlayer])
+        list outlist; // variable for storing the output list of the net (the same as actlist[lastlayer])
 
         type certainty; // variable for storing the certainty of the net
 
-        int out_index = 0, // variable for storing the index of the highest value in ANN::outlist
-        lastlayer = -1, // variable for storing the index of the last layer
-        incount;
+        int out_index = 0; // variable for storing the index of the highest value in ANN::outlist
 
         unsigned long long iteration = 0; // variable for storing the number of feed forward cycles the net has gone through        
 
@@ -101,7 +95,7 @@ class ANN {
             outputFile.close();
         }
 
-        int evaluate (list input){ // calculates the output of the net given an input
+        int eval (list input){ // calculates the output of the net given an input
             if (!initialised) throw runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");
             if (input.size() != incount) throw runtime_error("Input list should be the same size as the amount of input neurons.");
             
@@ -144,7 +138,7 @@ class ANN {
             if (!initialised) throw runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");
             int size = actlist[lastlayer].size();
             if (wanted.size() != size) throw runtime_error("Wanted list should be the same size as the number of outputs");
-            if (iteration == 0) throw runtime_error("This method only works if ANN::evaluate has already been run.");
+            if (iteration == 0) throw runtime_error("This method only works if ANN::eval has already been run.");
 
             type cost = 0;
             for (int i = 0; i < size; i++) cost += lfunc(function)(wanted[i], actlist[lastlayer][i], 0);
@@ -157,7 +151,7 @@ class ANN {
             list impact_list;
 
             if (wanted.size() != outsize) throw runtime_error("Wanted list should be the same size as the number of outputs");
-            if (iteration == 0) throw runtime_error("This method only works if ANN::evaluate has already been run.");
+            if (iteration == 0) throw runtime_error("This method only works if ANN::eval has already been run.");
             if (!initialised) throw runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");
 
             if (lastlayer) list (net[lastlayer-1].size(), 1).swap(dcda[lastlayer-1]);
@@ -185,7 +179,7 @@ class ANN {
                 if (bblay != -1) impactlayer = &dcda[bblay];
                 else impactlayer = &dcdin;
 
-                ncount = ( * impactlayer ).size();
+                ncount = impactlayer->size();
                 list (ncount, 1).swap( * impactlayer );
                 
                 for (int neur = 0; net[bblay+1].size(); neur++) for (int w = 0; w < ncount; w++)
@@ -276,7 +270,7 @@ class CNN : public ANN {
         outchan,
         lastconlayer = -1;
 
-        void input (int xinput, int yinput, int channelcount = 1){
+        void add_input (int xinput, int yinput, int channelcount = 1){
             if (xinput <= 0 || yinput <= 0 || channelcount <=0) throw runtime_error("All parameters of CNN::input should be greater than zero.");
             
             xin = xinput; yin = yinput; outchan = channelcount;
@@ -287,9 +281,7 @@ class CNN : public ANN {
 
         void add_convolutional_layer (int features, bool paddingvalid, int xfeature = 3, int yfeature = 3, int stridefeature = 1){
             if (fullyconnected) throw runtime_error("No convolutional layers should be added after adding a fully connected layer.");
-            if (conlayers.size() == 0){
-                
-            }
+            if (conlayers.size() == 0) throw runtime_error("CNN::add_input should have been run before adding dense layers.");;
             
             int xpa, ypa;
             if (paddingvalid){xpa = (xfeature-1)/2; ypa = (yfeature-1)/2;}
@@ -322,15 +314,9 @@ class CNN : public ANN {
             yinANN = newY;
         }
 
-        void add_pooling_layer (bool maxpooling, int xpoolwindow = 2, int ypoolwindow = 2, int stridepoolwindow = 2, int xinput = 0, int yinput = 0){
+        void add_pooling_layer (bool maxpooling, int xpoolwindow = 2, int ypoolwindow = 2, int stridepoolwindow = 2){
             if (fullyconnected) throw runtime_error("No pooling layers should be added after adding a fully connected layer.");
-            if (conlayers.size() == 0){
-                if (xinput == 0 || yinput == 0) throw runtime_error("For the first layer, xinput and yinput should be defined as a number greater than 0.");
-                xin = xinput; yin = yinput;
-
-                // adding the input matrix to CNN::channels
-                channels.push_back(vector<matrix> (1, matrix (yin, list (xin))));
-            }
+            if (conlayers.size() == 0);
             
             layerdetails layer;
             layer.type = POOLING;
@@ -364,7 +350,7 @@ class CNN : public ANN {
             printconv(write_to_terminal, write_to_file); ANN::export_net(write_to_terminal, write_to_file);
         }
 
-        int evaluate (vector<matrix> input){
+        int eval (vector<matrix> input){
             if (!ANN::initialised) throw runtime_error("Please run CNN::init or CNN::modify to initialise the CNN.");
             
             for (int c = 0; c < input.size(); c++) // looping over the vector of input channels, for example RGBA channels
@@ -419,7 +405,7 @@ class CNN : public ANN {
                 flattened.push_back(channels[lastconlayer+1][i][j][k]);
             flattened.shrink_to_fit();
 
-            return ANN::evaluate(flattened); // feedforward layers
+            return ANN::eval(flattened); // feedforward layers
         }
 
         void fit (list wanted, type learning_rate, int batch_size = 1){
@@ -457,7 +443,7 @@ class RNN : public ANN {
             ANN::add_input(2*input_count);
         }
 
-        list evaluate (list input){
+        list eval (list input){
             
         }
 };

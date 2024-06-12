@@ -10,9 +10,6 @@ typedef struct {
     list wgt;
     type bias = 0;
 
-    // list dcdw; // das 28-32B erbij per neuron!! doe anders
-    // type dcdb;
-
     type (*func)(type, type, int);
     type coef;
     bool softmax = false;
