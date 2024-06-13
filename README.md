@@ -19,7 +19,7 @@ I wanted to make the type user defined so I used the following code:
 `double` is default. To set the type to `float`, define FLOAT before the include line, like this:
 ```C++
 # define FLOAT
-# include "neural_net.hpp"
+# include "neural_net.cpp"
 ```
 Take in mind that `double` has double the precision of `float` type, but `float` (size: 4B) requires half the memory space `double` (size: 8B) does. It is a tradeoff. `double` is the default due to personal preference.
 
