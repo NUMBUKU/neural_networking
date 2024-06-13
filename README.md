@@ -80,7 +80,7 @@ BINSTEP is binarystep and SILU is Sigmoid weighted Linear Unit, also called swis
 The N before some of the sigmoids means that they are normalised between zero and one.
 
 LeakyReLU and ELU are parametric.
-GELU is approximated as SiLU(1.702*x) as suggested in [this paper](https://arxiv.org/pdf/1606.08415v5).
+GELU is approximated as x·σ(1.702·x) as suggested in [this paper](https://arxiv.org/pdf/1606.08415v5).
 
 ### neural_networking::loss_func
 This is an enum class. It defines a few loss functions. They are named appropiately:
