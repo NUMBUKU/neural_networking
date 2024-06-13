@@ -11,15 +11,15 @@ The basic structure is like the following: there is a file, func.c, which define
 I wanted to make the type user defined so I used the following code:
 ```C++
 # ifdef FLOAT
-    typedef float type;
+    typedef float type; // use float
 # else
-    typedef double type;
+    typedef double type; // use double
 # endif // FLOAT
 ```
 `double` is default. To set the type to `float`, define FLOAT before the include line, like this:
 ```C++
-# define FLOAT
-# include "neural_net.cpp"
+# define FLOAT // define FLOAT to use float type
+# include "neural_net.cpp" // include line
 ```
 Take in mind that `double` has double the precision of `float` type, but `float` (size: 4B) requires half the memory space `double` (size: 8B) does. It is a tradeoff. `double` is the default due to personal preference.
 
