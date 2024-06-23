@@ -81,19 +81,24 @@ The N before some of the sigmoids means that they are normalised between zero an
 
 Some functions use coëfficients/paramaters, they are: softmax, SiLU, LeakyReLU and ELU. The parameters are placed like this (β is the parameter):
 $$sigmoid: σ(\vec{v})_i = {e^{βv_i} \over {\sum_j{e^{βv_j}}}}$$
+
+$$
+LeakyReLU(x) =
+  \begin{cases}
+    x & x≥0 \\
+    β·x & x<0 \\
+  \end{cases}
+$$
+
 $$SiLU(x) = {x \over {1+e^{-βx}}}$$
-$$LeakyReLU(x) = \left\{
-\begin{array}{ll}
-      x & x≥0 \\
-      β·x & x<0 \\
-\end{array} 
-\right.$$
-$$ELU(x) = \left\{
-\begin{array}{ll}
-      x & x≥0 \\
-      β·(e^{x}-1) & x<0 \\
-\end{array} 
-\right.$$
+
+$$
+ELU(x) =
+  \begin{cases}
+    x & x≥0 \\
+    β·(e^{x}-1) & x<0 \\
+  \end{cases}
+$$
 
 GELU is approximated as $x·σ(1.702·x)$ (σ is the sigmoid) as suggested in [this paper](https://arxiv.org/pdf/1606.08415v5).
 > We can approximate the GELU with xσ(1.702x), if greater feedforward speed is worth the cost of exactness.
@@ -105,7 +110,14 @@ enum loss_func{ // classification for the loss functions
     MEAN_SQUARED,NMEANSQUARED,CROSS_ENTROPY,MAPD
 };
 ```
-MAPD is Mean Absolute Percentage Deviation/Error and NMEANSQUARED is mean squared loss multiplied by a half to 'normalise' it by losing the constant factor in the derivative.
+MAPD is Mean Absolute Percentage Deviation/Error and NMEANSQUARED is mean squared loss multiplied by a half to 'normalise' it by multiplying it by 0.5 to lose the constant factor in the derivative. cross entropy uses ln, so to stop $ln(0)$ cases from happening I set the minimum log value to 30,000.
+
+There are multiple ways to define these functions, but these are the ones I used:
+
+mean squared loss: $$\mathcal{L} = (y - y_{pred})^2$$
+normalised mean square loss: $$\mathcal{L} = {1 \over 2} (y - y_{pred})^2$$
+cross entropy: $$\mathcal{L} = -y_{pred}·ln(y) - (1 - y_{pred})·ln(1 - y)$$
+MAPD: $$\mathcal{L} = 100\left\lvert{{y_{pred}-y \over y_{pred}}}\right\rvert$$
 
 ## neural_networking::ANN
 Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would be defined like this:
