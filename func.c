@@ -7,7 +7,12 @@
     typedef double type;
 # endif // FLOAT
 
-const double MIN_LOG_VAL = -30'000;
+const double MIN_LOG_VAL = -30'000,
+    MIN_X_LOG_VAL = exp(MIN_LOG_VAL);
+
+type ln (type in){ // log definition so that log(0) does not cause issues
+    return in < MIN_X_LOG_VAL ? MIN_LOG_VAL : log(in);
+}
 
 // some activation functions
 // sigmoids
@@ -177,10 +182,6 @@ type mean_squared (type y, type ypred, int der){
 type norm_mean_squared (type y, type ypred, int der){
     type dif = y - ypred;
     return der ? dif : .5 * dif * dif;
-}
-
-type ln (type in){ // log definition so that log(0) does not cause issues
-    return in < exp(MIN_LOG_VAL) ? MIN_LOG_VAL : log(in);
 }
 
 type cross_entropy (type y, type ypred, int der){

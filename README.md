@@ -80,7 +80,7 @@ BINSTEP is binarystep and SILU is Sigmoid weighted Linear Unit, also called swis
 The N before some of the sigmoids means that they are normalised between zero and one.
 
 Some functions use coëfficients/paramaters, they are: softmax, SiLU, LeakyReLU and ELU. The parameters are placed like this (β is the parameter):
-$$sigmoid: σ(\vec{v})_i = {e^{βv_i} \over {\sum_j{e^{βv_j}}}}$$
+$$softmax: σ(\vec{v})_i = {e^{βv_i} \over {\sum_j{e^{βv_j}}}}$$
 
 $$
 LeakyReLU(x) =
@@ -118,6 +118,8 @@ mean squared loss: $$\mathcal{L} = (y - y_{pred})^2$$
 normalised mean square loss: $$\mathcal{L} = {1 \over 2} (y - y_{pred})^2$$
 cross entropy: $$\mathcal{L} = -y_{pred}·ln(y) - (1 - y_{pred})·ln(1 - y)$$
 MAPD: $$\mathcal{L} = 100\left\lvert{{y_{pred}-y \over y_{pred}}}\right\rvert$$
+
+Here, ypred is the expected output and y is the output of the net.
 
 ## neural_networking::ANN
 Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would be defined like this:
