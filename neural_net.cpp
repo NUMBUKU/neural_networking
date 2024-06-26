@@ -161,10 +161,9 @@ class ANN {
             if (iteration == 0) throw runtime_error("This method only works if ANN::eval has already been run.");
             if (!initialised) throw runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");
             
-            cout << "yup this is it";
-            if (!lastlayer){ if (inheritance)  dcdin = list (incount, 1);}
+            if (!lastlayer){ if (inheritance) dcdin = list (incount, 1);}
             else dcda[lastlayer-1] = list (net[lastlayer-1].size(), 1);
-            cout << "exit yup this is it";
+
 
             for (int neur = 0; neur < outsize; neur++){ // looping over output neurons to change their parameters and calculate the derivative with respect to the activation of previous layer
                 int wgtsize = net[lastlayer][neur].wgt.size();
@@ -174,7 +173,6 @@ class ANN {
 
                 if (learn_coeffficents) net[lastlayer][neur].coef -= learning_rate * impact_list[0] / batch_size;
                 net[lastlayer][neur].bias -= learning_rate * impact_list[learn_coeffficents] / batch_size;
-                //cout << dcda[lastlayer-1] << "\n" << dcda.size() << ", " << lastlayer;
 
                 for (int w = 0; w < wgtsize; w++){
                     if (lastlayer) dcda[lastlayer-1][w] *= net[lastlayer][neur].wgt[w];
@@ -216,7 +214,7 @@ class ANN {
                     for (int j = 0; j < wgtsize; j++)
                         net[layer][neur].wgt[j] -= constant * dcda[layer][neur] * impact_list[j+1+learn_coeffficents];
                 }
-            }
+        }
 };
 
 

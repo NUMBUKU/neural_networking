@@ -140,17 +140,12 @@ void test (int index, ANN * net){
 
 int main (){
     read_mnist( // traindata
-        "C:\\Users\\OE104296\\OneDrive - Libreon\\Documenten\\GitHub\\neural_networking\\examples\\MNIST\\t10k-images.idx3-ubyte",
-        "C:\\Users\\OE104296\\OneDrive - Libreon\\Documenten\\GitHub\\neural_networking\\examples\\MNIST\\t10k-labels.idx1-ubyte",
+        "t10k-images.idx3-ubyte",
+        "t10k-labels.idx1-ubyte",
         false
     );
     cout << "done loading training data\n";
-    // read_mnist( // testdata
-    //     "C:\\Users\\OE104296\\OneDrive - Libreon\\Documenten\\GitHub\\neural_networking\\examples\\MNIST\\train-images.idx3-ubyte",
-    //     "C:\\Users\\OE104296\\OneDrive - Libreon\\Documenten\\GitHub\\neural_networking\\examples\\MNIST\\train-labels.idx1-ubyte",
-    //     true
-    // );
-
+    
     ANN net;
         net.add_input(28*28);
         net.add_dense_layer(50, SILU, 1);

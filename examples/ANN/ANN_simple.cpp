@@ -12,7 +12,7 @@ using std::cout, std::endl,
     std::ostream,
     std::vector;
 
-const double learning_rate = 1; // learning rate althroughout the epochs
+const double learning_rate = .1; // learning rate althroughout the epochs
 
 const int samples = 6, // number of training samples
     epochs = 10;       // amount of epochs
@@ -36,7 +36,6 @@ wantedlists {{2}, {-1}, {1}, {-.5}, {.5}, {-2}};               // training outpu
 int main (){
     ANN net;
         net.add_input(1);                    // input of size 1
-        
         net.add_dense_layer(1, IDENTITY);    // dense layer with one neuron and identity activation (the coefficient isn't used in identity activation)
 
     double cost = 0; // initialise cost
@@ -44,15 +43,14 @@ int main (){
         for (int iteration = 0; iteration < samples; iteration++){
             net.eval(inputlists[iteration]);                            // before fitting ANN::eval should be run
             net.fit(wantedlists[iteration], learning_rate, samples);    // fitting
-            cout << "exitfit";
-
             cost += net.loss(wantedlists[iteration]);                   // averaging loss to calculate cost
         }
-        cout << "cost:" << cost/samples << "\n";                        // print the cost
+        cout << "cost: " << cost/samples                                // print the cost
+        << endl;                                                        // flush
+
         cost = 0;
     }
 
-    cout << endl; // flush
 
     // test the net
     list test {-.4};
