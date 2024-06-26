@@ -1,5 +1,5 @@
 # neural_networking
-With this repository I am trying to create a universal and open-source library for neural network projects, something like the already existing tensorflow and pytorch libraries, just much worse. The four types of NN I want to work on are ANN, CNN, RNN and LSTM. I am making this library to do research for my school.
+With this repository I am trying to create a universal and open-source library for neural network projects, something like the already existing tensorflow and pytorch libraries, just much worse. The four types of NN I want to work on are ANN, CNN, RNN and LSTM. I am making this library to do research for my school. This is a work in progress, so not everything is finished or functional.
 
 As for the type of dynamic lists I use, they are vectors from the standard library. I do have a linked list library, but it is bad and not practical for this use case.
 
