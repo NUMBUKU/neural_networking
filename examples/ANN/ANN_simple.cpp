@@ -18,10 +18,10 @@ const int samples = 6, // number of training samples
     epochs = 10;       // amount of epochs
 
 // Template to print a vector using cout. Credit: https://www.geeksforgeeks.org/different-ways-to-print-elements-of-vector/
-template <typename S> ostream& operator<<(ostream& os, const vector<S>& vector){
-    for (auto element : vector) os << element << " ";
-    return os;
-}
+// template <typename S> ostream& operator<<(ostream& os, const vector<S>& vector){
+//     for (auto element : vector) os << element << " ";
+//     return os;
+// }
 
 void print_output (list input, ANN * net){
     net->eval(input);
@@ -35,9 +35,8 @@ wantedlists {{2}, {-1}, {1}, {-.5}, {.5}, {-2}};               // training outpu
 
 int main (){
     ANN net;
-        net.add_input(1);                       // input of size 1
-        net.add_dense_layer(10, IDENTITY);
-        net.add_dense_layer(10, IDENTITY);
+        net.add_input(1);                    // input of size 1
+        
         net.add_dense_layer(1, IDENTITY);    // dense layer with one neuron and identity activation (the coefficient isn't used in identity activation)
 
     double cost = 0; // initialise cost
@@ -45,6 +44,7 @@ int main (){
         for (int iteration = 0; iteration < samples; iteration++){
             net.eval(inputlists[iteration]);                            // before fitting ANN::eval should be run
             net.fit(wantedlists[iteration], learning_rate, samples);    // fitting
+            cout << "exitfit";
 
             cost += net.loss(wantedlists[iteration]);                   // averaging loss to calculate cost
         }

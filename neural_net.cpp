@@ -4,8 +4,13 @@
 # include "neuron.cpp"
 
 using std::runtime_error,
-    std::cout,
+    std::cout, std::ostream,
     std::ofstream;
+
+template <typename S> ostream& operator<<(ostream& os, const vector<S>& vector){
+    for (auto element : vector) os << element << " ";
+    return os;
+}
 
 class ANN {
     protected: // used in inherited classes
@@ -60,7 +65,7 @@ class ANN {
             net.push_back(layer); net.shrink_to_fit();
             actlist.push_back(list (neuron_count, 0)); actlist.shrink_to_fit();
 
-            if (lastlayer >= 0) dcda.push_back(list (net[lastlayer].size(), 1)); dcda.shrink_to_fit();
+            if (lastlayer >= 0) dcda.push_back(list (neuron_count, 1)); dcda.shrink_to_fit();
 
             lastlayer++;
 
@@ -155,9 +160,11 @@ class ANN {
             if (wanted.size() != outsize) throw runtime_error("Wanted list should be the same size as the number of outputs");
             if (iteration == 0) throw runtime_error("This method only works if ANN::eval has already been run.");
             if (!initialised) throw runtime_error("Please run ANN::input and ANN::add_dense_layer to initialise the net.");
-
-            if (!lastlayer && inheritance) dcdin = list (incount, 1);
+            
+            cout << "yup this is it";
+            if (!lastlayer){ if (inheritance)  dcdin = list (incount, 1);}
             else dcda[lastlayer-1] = list (net[lastlayer-1].size(), 1);
+            cout << "exit yup this is it";
 
             for (int neur = 0; neur < outsize; neur++){ // looping over output neurons to change their parameters and calculate the derivative with respect to the activation of previous layer
                 int wgtsize = net[lastlayer][neur].wgt.size();
@@ -167,6 +174,7 @@ class ANN {
 
                 if (learn_coeffficents) net[lastlayer][neur].coef -= learning_rate * impact_list[0] / batch_size;
                 net[lastlayer][neur].bias -= learning_rate * impact_list[learn_coeffficents] / batch_size;
+                //cout << dcda[lastlayer-1] << "\n" << dcda.size() << ", " << lastlayer;
 
                 for (int w = 0; w < wgtsize; w++){
                     if (lastlayer) dcda[lastlayer-1][w] *= net[lastlayer][neur].wgt[w];
@@ -178,7 +186,7 @@ class ANN {
 
             for (int bblay = lastlayer-2; bblay >= -1; bblay--){ // looping through blackbox layers and input layer
                 int ncount;                
-                if (bblay == -1 && inheritance) ncount = dcdin.size();
+                if (bblay == -1){ if (inheritance)  ncount = dcdin.size();}
                 else ncount = net[bblay].size();
 
                 if (bblay == -1) {if (inheritance) dcdin = list (ncount, 1);}

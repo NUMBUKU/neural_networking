@@ -119,7 +119,7 @@ normalised mean square loss: $$\mathcal{L} = {1 \over 2} (y - y_{pred})^2$$
 cross entropy: $$\mathcal{L} = -y_{pred}·ln(y) - (1 - y_{pred})·ln(1 - y)$$
 MAPD: $$\mathcal{L} = 100\left\lvert{{y_{pred}-y \over y_{pred}}}\right\rvert$$
 
-Here, ypred is the expected output and y is the output of the net.
+Here, y~pred~ is the expected output and y is the output of the net.
 
 ## neural_networking::ANN
 Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would be defined like this:
@@ -200,6 +200,12 @@ Can throw the following errors:
 * `std::runtime_error("This method only works if ANN::eval has already been run.");`
 
 Returns the calculated loss.
+
+Loss is not the same as cost: loss is the error for one single training sample. Cost however, is the average of all the losses of all the samples in one trining set. For a training set with N samples, cost is calculated like this:
+
+$$\mathcal{C} = {1 \over N}\sum_{k=1}^{N} \mathcal{L}_k$$
+
+Where $\mathcal{L}_k$ is the loss for training sample k.
 
 ---
 #### ANN::fit
