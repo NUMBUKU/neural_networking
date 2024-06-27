@@ -68,7 +68,7 @@ returns the normalised vector.
 
 # classes
 
-### neural_networking::act_func
+## neural_networking::act_func
 This is an enum class. It defines a few activation functions. They are named appropiately:
 ```C++
 enum act_func{ // classification for the activation functions
@@ -103,7 +103,7 @@ $$
 GELU is approximated as $x·σ(1.702·x)$ (σ is the sigmoid) as suggested in [this paper](https://arxiv.org/pdf/1606.08415v5).
 > We can approximate the GELU with xσ(1.702x), if greater feedforward speed is worth the cost of exactness.
 
-### neural_networking::loss_func
+## neural_networking::loss_func
 This is an enum class. It defines a few loss functions. They are named appropiately:
 ```C++
 enum loss_func{ // classification for the loss functions
@@ -119,7 +119,7 @@ normalised mean square loss: $$\mathcal{L} = {1 \over 2} (y - y_{pred})^2$$
 cross entropy: $$\mathcal{L} = -y_{pred}·ln(y) - (1 - y_{pred})·ln(1 - y)$$
 MAPD: $$\mathcal{L} = 100\left\lvert{{y_{pred}-y \over y_{pred}}}\right\rvert$$
 
-Here, y~pred~ is the expected output and y is the output of the net.
+Here, y<sub>pred</sub> is the expected output and y is the output of the net.
 
 ## neural_networking::ANN
 Your good old Artificial Neural Network. It is also the parent class of all the other types. An ANN called net with one input and one neuron would be defined like this:
