@@ -80,6 +80,7 @@ BINSTEP is binarystep and SILU is Sigmoid weighted Linear Unit, also called swis
 The N before some of the sigmoids means that they are normalised between zero and one.
 
 Some functions use coëfficients/paramaters, they are: softmax, SiLU, LeakyReLU and ELU. The parameters are placed like this (β is the parameter):
+
 $$softmax: σ(\vec{v})_i = {e^{βv_i} \over {\sum_j{e^{βv_j}}}}$$
 
 $$
