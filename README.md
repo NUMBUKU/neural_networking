@@ -115,10 +115,22 @@ MAPD is Mean Absolute Percentage Deviation/Error and NMEANSQUARED is mean square
 
 There are multiple ways to define these functions, but these are the ones I used:
 
-mean squared loss: $$\mathcal{L} = (y - y_{pred})^2$$
-normalised mean square loss: $$\mathcal{L} = {1 \over 2} (y - y_{pred})^2$$
-cross entropy: $$\mathcal{L} = -y_{pred}·ln(y) - (1 - y_{pred})·ln(1 - y)$$
-MAPD: $$\mathcal{L} = 100\left\lvert{{y_{pred}-y \over y_{pred}}}\right\rvert$$
+mean squared loss:
+
+$$\mathcal{L} = (y - y_{pred})^2$$
+
+normalised mean square loss:
+
+$$\mathcal{L} = {1 \over 2} (y - y_{pred})^2$$
+
+cross entropy:
+
+$$\mathcal{L} = -y_{pred}·ln(y) - (1 - y_{pred})·ln(1 - y)$$
+
+MAPD:
+
+$$\mathcal{L} = 100\left\lvert{{y_{pred}-y \over y_{pred}}}\right\rvert$$
+
 
 Here, y<sub>pred</sub> is the expected output and y is the output of the net.
 
