@@ -214,7 +214,7 @@ Can throw the following errors:
 
 Returns the calculated loss.
 
-Loss is not the same as cost: loss is the error for one single training sample. Cost however, is the average of all the losses of all the samples in one trining set. For a training set with N samples, cost is calculated like this:
+Loss is not the same as cost: loss is the error for one single training sample. Cost however, is the average of all the losses of all the samples in one training set. For a training set with N samples, cost is calculated like this:
 
 $$\mathcal{C} = {1 \over N}\sum_{k=1}^{N} \mathcal{L}_k$$
 
